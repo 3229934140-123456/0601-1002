@@ -1,0 +1,212 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: 32rpx $page-padding 60rpx;
+  color: $color-text-white;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.dateInfo {
+  .dateText {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  .weekText {
+    font-size: $font-size-sm;
+    opacity: 0.8;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.headerBtn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.postTabs {
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-round;
+  padding: 6rpx;
+}
+
+.postTab {
+  flex: 1;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+
+  &.active {
+    background-color: $color-bg-card;
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+}
+
+.statItem {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-md;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+
+  .statNum {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    display: block;
+    margin-bottom: 4rpx;
+  }
+  .statLabel {
+    font-size: $font-size-xs;
+    opacity: 0.8;
+  }
+}
+
+.content {
+  margin-top: -40rpx;
+  padding: 0 $page-padding;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  margin-top: $spacing-xl;
+}
+
+.currentShift {
+  margin-bottom: $spacing-sm;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.moreText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.shiftsScroll {
+  white-space: nowrap;
+  margin: 0 -$page-padding;
+  padding: 0 $page-padding;
+}
+
+.shiftCardWrapper {
+  display: inline-block;
+  width: 300rpx;
+  margin-right: $spacing-md;
+  vertical-align: top;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.actionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.actionIcon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+
+  &.blue {
+    background-color: $color-primary-bg;
+  }
+  &.green {
+    background-color: $color-success-bg;
+  }
+  &.orange {
+    background-color: $color-warning-bg;
+  }
+  &.gray {
+    background-color: $color-bg-gray;
+  }
+}
+
+.actionText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.todayList {
+  // 
+}
+
+.listTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  margin-top: $spacing-xl;
+
+  .titleText {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .countText {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}

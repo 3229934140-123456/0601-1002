@@ -1,0 +1,257 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.content {
+  padding: $spacing-md $page-padding;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin: $spacing-lg 0 $spacing-md;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.statCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+
+  &.featured {
+    grid-column: span 2;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+
+    .statLabel {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .statNum {
+      color: $color-text-white;
+    }
+    .statSub {
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+}
+
+.statLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.statNum {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+  display: block;
+
+  .unit {
+    font-size: $font-size-md;
+    font-weight: $font-weight-normal;
+    margin-left: 4rpx;
+  }
+}
+
+.statSub {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.postStats {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.postStatItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.postIcon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: $spacing-md;
+
+  &.service {
+    background-color: rgba(43, 106, 255, 0.1);
+  }
+  &.warehouse {
+    background-color: rgba(0, 180, 42, 0.1);
+  }
+  &.store {
+    background-color: rgba(255, 125, 0, 0.1);
+  }
+}
+
+.postInfo {
+  flex: 1;
+}
+
+.postName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.postDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.postRate {
+  text-align: right;
+
+  .rateNum {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+    display: block;
+  }
+  .rateLabel {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.tagsSection {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.tagsTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.tagItem {
+  padding: 12rpx 24rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  background-color: $color-bg-gray;
+  color: $color-text-secondary;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+
+  .tagCount {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 2rpx 10rpx;
+    border-radius: $radius-round;
+  }
+
+  &.hot {
+    background-color: $color-error-bg;
+    color: $color-error;
+
+    .tagCount {
+      background-color: rgba(245, 63, 63, 0.15);
+      color: $color-error;
+    }
+  }
+}
+
+.trendSection {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.trendHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.trendTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.trendChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 240rpx;
+  padding-bottom: 48rpx;
+  position: relative;
+}
+
+.chartBarWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.chartBar {
+  width: 32rpx;
+  background: linear-gradient(180deg, $color-primary-light 0%, $color-primary 100%);
+  border-radius: 8rpx 8rpx 0 0;
+  min-height: 8rpx;
+  transition: height 0.5s ease;
+}
+
+.chartLabel {
+  position: absolute;
+  bottom: 0;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.chartValue {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-bottom: 8rpx;
+}

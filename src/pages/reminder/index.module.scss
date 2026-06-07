@@ -1,0 +1,177 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+}
+
+.header {
+  background-color: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.unreadCount {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+
+  .num {
+    color: $color-error;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.markReadBtn {
+  font-size: $font-size-sm;
+  color: $color-primary;
+}
+
+.tabBar {
+  display: flex;
+  background-color: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.tabItem {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-md 0;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  position: relative;
+
+  &.active {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40rpx;
+      height: 6rpx;
+      background-color: $color-primary;
+      border-radius: 3rpx;
+    }
+  }
+
+  .badge {
+    position: absolute;
+    top: 12rpx;
+    right: 24rpx;
+    min-width: 32rpx;
+    height: 32rpx;
+    line-height: 32rpx;
+    padding: 0 8rpx;
+    background-color: $color-error;
+    color: $color-text-white;
+    font-size: 20rpx;
+    border-radius: $radius-round;
+    text-align: center;
+  }
+}
+
+.listContent {
+  padding: $spacing-md $page-padding;
+}
+
+.reminderCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  position: relative;
+
+  &.unread::before {
+    content: '';
+    position: absolute;
+    top: 24rpx;
+    right: 24rpx;
+    width: 16rpx;
+    height: 16rpx;
+    background-color: $color-error;
+    border-radius: 50%;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.typeIcon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  margin-right: $spacing-md;
+
+  &.timeout {
+    background-color: $color-error-bg;
+  }
+  &.pending {
+    background-color: $color-warning-bg;
+  }
+  &.returned {
+    background-color: $color-error-bg;
+  }
+  &.system {
+    background-color: $color-primary-bg;
+  }
+}
+
+.typeInfo {
+  flex: 1;
+}
+
+.typeTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.typeTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.cardContent {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  padding: $spacing-md 0;
+  border-top: 1rpx solid $color-divider;
+  margin-top: $spacing-sm;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+}
+
+.actionBtn {
+  padding: 12rpx 24rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  background-color: $color-bg-gray;
+  color: $color-text-secondary;
+
+  &.primary {
+    background-color: $color-primary;
+    color: $color-text-white;
+  }
+}

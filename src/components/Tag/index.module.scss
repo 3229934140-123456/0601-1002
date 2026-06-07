@@ -1,0 +1,91 @@
+@use '@/styles/variables.scss' as *;
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $spacing-sm;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+
+  &.sm {
+    height: 40rpx;
+    line-height: 40rpx;
+    .tagText {
+      font-size: $font-size-xs;
+    }
+  }
+
+  &.md {
+    height: 52rpx;
+    line-height: 52rpx;
+    padding: 0 $spacing-md;
+    .tagText {
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+.default {
+  background-color: $color-bg-gray;
+  color: $color-text-secondary;
+}
+
+.primary {
+  background-color: $color-primary-bg;
+  color: $color-primary;
+}
+
+.success {
+  background-color: $color-success-bg;
+  color: $color-success;
+}
+
+.warning {
+  background-color: $color-warning-bg;
+  color: $color-warning;
+}
+
+.error {
+  background-color: $color-error-bg;
+  color: $color-error;
+}
+
+.urgent {
+  background-color: $color-urgent-bg;
+  color: $color-urgent;
+}
+
+.high {
+  background-color: $color-high-bg;
+  color: $color-high;
+}
+
+.normal {
+  background-color: $color-normal-bg;
+  color: $color-normal;
+}
+
+.low {
+  background-color: $color-low-bg;
+  color: $color-low;
+}
+
+.service {
+  background-color: rgba(43, 106, 255, 0.1);
+  color: $color-service;
+}
+
+.warehouse {
+  background-color: rgba(0, 180, 42, 0.1);
+  color: $color-warehouse;
+}
+
+.store {
+  background-color: rgba(255, 125, 0, 0.1);
+  color: $color-store;
+}
+
+.tagText {
+  font-weight: $font-weight-medium;
+}
