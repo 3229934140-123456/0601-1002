@@ -16,7 +16,8 @@ const MemberConfirmPage: React.FC = () => {
     shiftConfirmations,
     confirmMember,
     addReminder,
-    members
+    members,
+    activities
   } = useHandoverStore();
 
   const [shiftId, setShiftId] = useState('');
@@ -40,12 +41,14 @@ const MemberConfirmPage: React.FC = () => {
   const shiftHandoverItems = useMemo(() => handoverItems.filter(item => item.shiftId === shiftId), [handoverItems, shiftId]);
   const confirmations = useMemo(() => shiftConfirmations[shiftId] || {}, [shiftConfirmations, shiftId]);
 
+  const currentMember = members.find(m => m.id === currentMemberId);
+  const isLeader = currentMember?.id === shift?.leader.id;
+
   const memberConfirmList = useMemo(() => {
     if (!shift) return [];
     
     return shift.members.map(member => {
       const confirmation = confirmations[member.id];
-      // 初始模拟几个已确认的
       const mockConfirmed = member.id === shift.members[0]?.id || member.id === shift.members[1]?.id;
       const mockTime = mockConfirmed ? new Date(Date.now() - 3600000).toISOString() : undefined;
       
@@ -59,13 +62,17 @@ const MemberConfirmPage: React.FC = () => {
 
   const confirmedCount = memberConfirmList.filter(m => m.confirmed).length;
   const totalCount = memberConfirmList.length;
+  const unconfirmedMembers = memberConfirmList.filter(m => !m.confirmed);
 
   const myItems = useMemo(() => {
     return shiftHandoverItems.filter(item => item.assignee.id === currentMemberId);
   }, [shiftHandoverItems, currentMemberId]);
 
-  const currentMember = members.find(m => m.id === currentMemberId);
   const myConfirmation = memberConfirmList.find(m => m.id === currentMemberId);
+
+  const remindActivities = useMemo(() => {
+    return activities.filter(a => a.shiftId === shiftId && a.type === 'remind');
+  }, [activities, shiftId]);
 
   const handleMyConfirm = async () => {
     if (!shift || myConfirmation?.confirmed) return;
@@ -83,9 +90,8 @@ const MemberConfirmPage: React.FC = () => {
   };
 
   const handleSendReminder = () => {
-    if (!shift) return;
+    if (!shift || !currentMember) return;
     
-    const unconfirmedMembers = memberConfirmList.filter(m => !m.confirmed);
     if (unconfirmedMembers.length === 0) {
       showToast('全员已确认');
       return;
@@ -99,6 +105,16 @@ const MemberConfirmPage: React.FC = () => {
         itemId: shiftId,
         relatedType: 'shift'
       });
+    });
+
+    // 添加提醒动态
+    const { addActivity } = useHandoverStore.getState();
+    addActivity({
+      shiftId,
+      type: 'remind',
+      operator: currentMember,
+      title: '一键提醒',
+      description: `提醒${unconfirmedMembers.length}位未确认成员`
     });
 
     showToast(`已提醒${unconfirmedMembers.length}位成员`, 'success');
@@ -147,12 +163,57 @@ const MemberConfirmPage: React.FC = () => {
               <Text className={styles.statLabel}>未确认</Text>
             </View>
           </View>
+          <View className={styles.progressBar}>
+            <View 
+              className={styles.progressFill} 
+              style={{ width: `${Math.round((confirmedCount / totalCount) * 100)}%` }} 
+            />
+          </View>
         </View>
+
+        {isLeader && unconfirmedMembers.length > 0 && (
+          <View className={styles.reminderCard}>
+            <View className={styles.reminderHeader}>
+              <Text className={styles.reminderTitle}>⚠️ 待确认成员</Text>
+              <Text className={styles.reminderCount}>{unconfirmedMembers.length}人</Text>
+            </View>
+            <View className={styles.unconfirmedList}>
+              {unconfirmedMembers.map(member => (
+                <View key={member.id} className={styles.unconfirmedItem}>
+                  <Image 
+                    className={styles.unconfirmedAvatar} 
+                    src={member.avatar} 
+                    mode="aspectFill" 
+                  />
+                  <View className={styles.unconfirmedInfo}>
+                    <Text className={styles.unconfirmedName}>{member.name}</Text>
+                    <Text className={styles.unconfirmedRole}>
+                      {member.id === shift.leader.id ? '班长' : '组员'}
+                    </Text>
+                  </View>
+                  <View className={styles.pendingBadge}>待确认</View>
+                </View>
+              ))}
+            </View>
+            <View className={styles.remindActionBtn} onClick={handleSendReminder}>
+              <Text>📣 一键提醒未确认成员</Text>
+            </View>
+            {remindActivities.length > 0 && (
+              <View className={styles.remindRecord}>
+                <Text className={styles.remindRecordText}>
+                  已发起 {remindActivities.length} 次提醒
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {currentMember && (
           <View className={styles.myConfirmCard}>
             <View className={styles.myConfirmHeader}>
-              <Text className={styles.myConfirmTitle}>我的确认</Text>
+              <Text className={styles.myConfirmTitle}>
+                {isLeader ? '我的确认（班长）' : '我的确认'}
+              </Text>
               <View className={`${styles.myConfirmStatus} ${myConfirmation?.confirmed ? 'confirmed' : 'pending'}`}>
                 <Text>{myConfirmation?.confirmed ? '已确认' : '待确认'}</Text>
               </View>
@@ -162,7 +223,7 @@ const MemberConfirmPage: React.FC = () => {
               <View className={styles.myInfo}>
                 <Text className={styles.myName}>{currentMember.name}</Text>
                 <Text className={styles.myRole}>
-                  {currentMember.id === shift.leader.id ? '班长' : '组员'}
+                  {isLeader ? '班长' : '组员'}
                 </Text>
               </View>
               {!myConfirmation?.confirmed && (

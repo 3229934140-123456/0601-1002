@@ -99,3 +99,17 @@ export interface HandoverTemplate {
     priority: PriorityLevel;
   }[];
 }
+
+export type ActivityType = 'create' | 'confirm' | 'return' | 'resend' | 'complete' | 'member_confirm' | 'summary' | 'remind';
+
+export interface ActivityItem {
+  id: string;
+  shiftId: string;
+  type: ActivityType;
+  itemId?: string;
+  memberId?: string;
+  operator: TeamMember;
+  title: string;
+  description?: string;
+  createdAt: string;
+}

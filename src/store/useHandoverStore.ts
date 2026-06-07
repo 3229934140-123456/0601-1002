@@ -10,7 +10,9 @@ import {
   ShiftStatus,
   HandoverTemplate,
   Attachment,
-  StatsData
+  StatsData,
+  ActivityItem,
+  ActivityType
 } from '../types/handover';
 import {
   mockShifts,
@@ -29,6 +31,7 @@ interface HandoverStore {
   templates: HandoverTemplate[];
   shiftSummaries: Record<string, string>;
   shiftConfirmations: Record<string, Record<string, { confirmed: boolean; confirmedAt?: string }>>;
+  activities: ActivityItem[];
 
   addShift: (shift: Omit<Shift, 'id' | 'handoverCount' | 'completedCount' | 'status'>) => void;
   getShiftsByPost: (post: PostType) => Shift[];
@@ -43,6 +46,8 @@ interface HandoverStore {
   returnHandover: (id: string, reason: string) => void;
   resendHandover: (id: string, updates?: Partial<HandoverItem>) => void;
   completeHandover: (id: string) => void;
+  batchConfirmHandovers: (ids: string[]) => { success: number; failed: number };
+  batchCompleteHandovers: (ids: string[]) => { success: number; failed: number };
 
   addReminder: (reminder: Omit<ReminderItem, 'id' | 'createdAt' | 'read'> & { relatedType?: 'handover' | 'shift' }) => void;
   markReminderRead: (id: string) => void;
@@ -55,6 +60,9 @@ interface HandoverStore {
   confirmMember: (shiftId: string, memberId: string) => void;
   getMemberConfirmation: (shiftId: string, memberId: string) => { confirmed: boolean; confirmedAt?: string };
   getShiftConfirmations: (shiftId: string) => Record<string, { confirmed: boolean; confirmedAt?: string }>;
+
+  addActivity: (activity: Omit<ActivityItem, 'id' | 'createdAt'>) => void;
+  getActivitiesByShift: (shiftId: string) => ActivityItem[];
 
   getStats: () => StatsData;
 }
@@ -71,6 +79,7 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
   templates: mockTemplates,
   shiftSummaries: {},
   shiftConfirmations: {},
+  activities: [],
 
   addShift: (shiftData) => {
     const newShift: Shift = {
@@ -121,6 +130,16 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
       relatedType: 'handover'
     });
 
+    // 添加动态记录
+    get().addActivity({
+      shiftId: itemData.shiftId,
+      type: 'create',
+      itemId: newItem.id,
+      operator: itemData.creator,
+      title: '新建交接',
+      description: itemData.title
+    });
+
     return newItem;
   },
 
@@ -166,6 +185,16 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
         shifts: updatedShifts
       };
     });
+
+    // 添加动态记录
+    get().addActivity({
+      shiftId: item.shiftId,
+      type: 'confirm',
+      itemId: id,
+      operator: item.assignee,
+      title: '确认交接',
+      description: item.title
+    });
   },
 
   returnHandover: (id, reason) => {
@@ -192,6 +221,16 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
       content: `你的交接「${item.title}」被退回，请补充信息后重新提交`,
       itemId: id,
       relatedType: 'handover'
+    });
+
+    // 添加动态记录
+    get().addActivity({
+      shiftId: item.shiftId,
+      type: 'return',
+      itemId: id,
+      operator: item.assignee,
+      title: '退回交接',
+      description: `${item.title} - ${reason}`
     });
   },
 
@@ -223,6 +262,16 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
       itemId: id,
       relatedType: 'handover'
     });
+
+    // 添加动态记录
+    get().addActivity({
+      shiftId: item.shiftId,
+      type: 'resend',
+      itemId: id,
+      operator: item.creator,
+      title: '补充重发',
+      description: item.title
+    });
   },
 
   completeHandover: (id) => {
@@ -251,6 +300,52 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
         shifts: updatedShifts
       };
     });
+
+    // 添加动态记录
+    get().addActivity({
+      shiftId: item.shiftId,
+      type: 'complete',
+      itemId: id,
+      operator: item.assignee,
+      title: '标记完成',
+      description: item.title
+    });
+  },
+
+  batchConfirmHandovers: (ids) => {
+    let success = 0;
+    let failed = 0;
+    const items = get().handoverItems;
+
+    ids.forEach(id => {
+      const item = items.find(i => i.id === id);
+      if (item && item.status === 'pending') {
+        get().confirmHandover(id);
+        success++;
+      } else {
+        failed++;
+      }
+    });
+
+    return { success, failed };
+  },
+
+  batchCompleteHandovers: (ids) => {
+    let success = 0;
+    let failed = 0;
+    const items = get().handoverItems;
+
+    ids.forEach(id => {
+      const item = items.find(i => i.id === id);
+      if (item && item.status === 'confirmed') {
+        get().completeHandover(id);
+        success++;
+      } else {
+        failed++;
+      }
+    });
+
+    return { success, failed };
   },
 
   addReminder: (reminderData) => {
@@ -290,6 +385,18 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
         [shiftId]: summary
       }
     }));
+
+    // 添加动态记录
+    const shift = get().getShiftById(shiftId);
+    if (shift) {
+      get().addActivity({
+        shiftId,
+        type: 'summary',
+        operator: shift.leader,
+        title: '班后总结',
+        description: summary.length > 50 ? summary.substring(0, 50) + '...' : summary
+      });
+    }
   },
 
   getShiftSummary: (shiftId) => {
@@ -309,6 +416,19 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
         }
       }
     }));
+
+    // 添加动态记录
+    const member = get().members.find(m => m.id === memberId);
+    if (member) {
+      get().addActivity({
+        shiftId,
+        type: 'member_confirm',
+        memberId,
+        operator: member,
+        title: '成员确认',
+        description: `${member.name} 已确认收到交接`
+      });
+    }
   },
 
   getMemberConfirmation: (shiftId, memberId) => {
@@ -320,11 +440,28 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
     return get().shiftConfirmations[shiftId] || {};
   },
 
+  addActivity: (activityData) => {
+    const newActivity: ActivityItem = {
+      ...activityData,
+      id: generateId(),
+      createdAt: new Date().toISOString()
+    };
+    set((state) => ({
+      activities: [newActivity, ...state.activities]
+    }));
+  },
+
+  getActivitiesByShift: (shiftId) => {
+    return get().activities
+      .filter(a => a.shiftId === shiftId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
   getStats: () => {
     const items = get().handoverItems;
     const total = items.length;
-    const completedItems = items.filter(i => i.status === 'completed');
-    const completedRate = total > 0 ? Math.round((completedItems.length / total) * 1000) / 10 : 0;
+    const finishedItems = items.filter(i => i.status === 'completed' || i.status === 'confirmed');
+    const completedRate = total > 0 ? Math.round((finishedItems.length / total) * 1000) / 10 : 0;
 
     const onTimeItems = items.filter(i => {
       if (!i.deadline) return true;

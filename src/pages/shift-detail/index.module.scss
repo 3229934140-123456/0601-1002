@@ -60,6 +60,49 @@
   margin-bottom: $spacing-sm;
 }
 
+.shiftStatus {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 6rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.ongoing {
+    background-color: rgba($color-success, 0.2);
+    color: $color-success;
+
+    .shiftStatusDot {
+      background-color: $color-success;
+    }
+  }
+
+  &.upcoming {
+    background-color: rgba($color-warning, 0.2);
+    color: $color-warning;
+
+    .shiftStatusDot {
+      background-color: $color-warning;
+    }
+  }
+
+  &.finished {
+    background-color: rgba($color-text-tertiary, 0.2);
+    color: $color-text-tertiary;
+
+    .shiftStatusDot {
+      background-color: $color-text-tertiary;
+    }
+  }
+}
+
+.shiftStatusDot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+}
+
 .shiftName {
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;
@@ -234,6 +277,108 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.timelineCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+}
+
+.cardSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.timelineList {
+  position: relative;
+  padding-left: 20rpx;
+}
+
+.timelineItem {
+  position: relative;
+  padding-left: 40rpx;
+  padding-bottom: $spacing-md;
+  cursor: pointer;
+
+  &.last {
+    padding-bottom: 0;
+  }
+
+  &:last-child {
+    .timelineContent {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+}
+
+.timelineDot {
+  position: absolute;
+  left: 0;
+  top: 4rpx;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background-color: $color-bg-gray;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.timelineIcon {
+  font-size: 24rpx;
+}
+
+.timelineItem:not(.last)::before {
+  content: '';
+  position: absolute;
+  left: 23rpx;
+  top: 52rpx;
+  width: 2rpx;
+  height: calc(100% - 48rpx);
+  background-color: $color-divider;
+}
+
+.timelineContent {
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.timelineTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.timelineTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.timelineDesc {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-bottom: 8rpx;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timelineOperator {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
 }
 
 .actionRow {

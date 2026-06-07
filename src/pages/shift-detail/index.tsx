@@ -3,17 +3,16 @@ import { View, Text, ScrollView, Image } from '@tarojs/components';
 import { useRouter, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import Tag from '../../components/Tag';
-import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import HandoverItemCard from '../../components/HandoverItem';
 import useHandoverStore from '../../store/useHandoverStore';
 import { getPostName } from '../../data/mockData';
-import { HandoverStatus } from '../../types/handover';
-import { navigateTo, navigateBack, showToast } from '../../utils';
+import { ActivityItem } from '../../types/handover';
+import { navigateTo, navigateBack, showToast, formatTime } from '../../utils';
 
 const ShiftDetailPage: React.FC = () => {
   const router = useRouter();
-  const { shifts, handoverItems } = useHandoverStore();
+  const { shifts, handoverItems, activities } = useHandoverStore();
 
   const [shiftId, setShiftId] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'confirmed' | 'returned' | 'completed'>('all');
@@ -27,6 +26,12 @@ const ShiftDetailPage: React.FC = () => {
 
   const shift = useMemo(() => shifts.find(s => s.id === shiftId), [shifts, shiftId]);
   const shiftHandoverItems = useMemo(() => handoverItems.filter(item => item.shiftId === shiftId), [handoverItems, shiftId]);
+  const shiftActivities = useMemo(() => 
+    activities.filter(a => a.shiftId === shiftId).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ), 
+    [activities, shiftId]
+  );
 
   const filteredItems = useMemo(() => {
     if (activeTab === 'all') return shiftHandoverItems;
@@ -67,6 +72,30 @@ const ShiftDetailPage: React.FC = () => {
     finished: { text: '已结束', type: 'default' as const }
   };
 
+  const getActivityIcon = (type: string): string => {
+    const iconMap: Record<string, string> = {
+      create: '📝',
+      confirm: '✅',
+      return: '↩️',
+      resend: '🔄',
+      complete: '🏁',
+      member_confirm: '👤',
+      summary: '📊',
+      remind: '🔔'
+    };
+    return iconMap[type] || '📌';
+  };
+
+  const handleActivityClick = (activity: ActivityItem) => {
+    if (activity.itemId) {
+      navigateTo(`/pages/item-detail/index?id=${activity.itemId}`);
+    } else if (activity.type === 'member_confirm' || activity.type === 'remind') {
+      navigateTo(`/pages/member-confirm/index?shiftId=${activity.shiftId}`);
+    } else if (activity.type === 'summary') {
+      navigateTo(`/pages/shift-summary/index?shiftId=${activity.shiftId}`);
+    }
+  };
+
   if (!shift) {
     return (
       <View className={styles.page}>
@@ -101,7 +130,10 @@ const ShiftDetailPage: React.FC = () => {
         <View className={styles.shiftInfo}>
           <View className={styles.shiftHeader}>
             <Tag text={getPostName(shift.post)} type={shift.post} size="md" />
-            <StatusBadge status={statusMap[shift.status].type as any} text={statusMap[shift.status].text} />
+            <View className={`${styles.shiftStatus} ${styles[shift.status]}`}>
+              <View className={styles.shiftStatusDot} />
+              <Text>{statusMap[shift.status].text}</Text>
+            </View>
           </View>
           <Text className={styles.shiftName}>{shift.name}</Text>
           <Text className={styles.shiftTime}>
@@ -165,6 +197,47 @@ const ShiftDetailPage: React.FC = () => {
               </View>
             </View>
           </View>
+        </View>
+
+        <View className={styles.timelineCard}>
+          <View className={styles.cardHeader}>
+            <Text className={styles.cardTitle}>⏱️ 交接动态</Text>
+            <Text className={styles.cardSubtitle}>共 {shiftActivities.length} 条</Text>
+          </View>
+          
+          {shiftActivities.length > 0 ? (
+            <View className={styles.timelineList}>
+              {shiftActivities.slice(0, 8).map((activity, index) => (
+                <View 
+                  key={activity.id} 
+                  className={`${styles.timelineItem} ${index === shiftActivities.length - 1 || index === 7 ? styles.last : ''}`}
+                  onClick={() => handleActivityClick(activity)}
+                >
+                  <View className={styles.timelineDot}>
+                    <Text className={styles.timelineIcon}>{getActivityIcon(activity.type)}</Text>
+                  </View>
+                  <View className={styles.timelineContent}>
+                    <View className={styles.timelineHeader}>
+                      <Text className={styles.timelineTitle}>{activity.title}</Text>
+                      <Text className={styles.timelineTime}>{formatTime(activity.createdAt)}</Text>
+                    </View>
+                    {activity.description && (
+                      <Text className={styles.timelineDesc}>{activity.description}</Text>
+                    )}
+                    <Text className={styles.timelineOperator}>
+                      {activity.operator.name}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <EmptyState 
+              icon="📋" 
+              title="暂无动态" 
+              description="新建交接后将显示动态记录"
+            />
+          )}
         </View>
 
         <View className={styles.actionRow}>
