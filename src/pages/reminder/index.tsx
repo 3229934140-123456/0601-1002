@@ -62,7 +62,9 @@ const ReminderPage: React.FC = () => {
   const handleViewDetail = (reminder: ReminderItem) => {
     markReminderRead(reminder.id);
     
-    if (reminder.itemId) {
+    if (reminder.relatedType === 'shift') {
+      navigateTo(`/pages/member-confirm/index?shiftId=${reminder.itemId}`);
+    } else if (reminder.itemId) {
       navigateTo(`/pages/item-detail/index?id=${reminder.itemId}`);
     }
   };
@@ -72,7 +74,9 @@ const ReminderPage: React.FC = () => {
     
     markReminderRead(reminder.id);
     
-    if (reminder.type === 'pending' && reminder.itemId) {
+    if (reminder.relatedType === 'shift') {
+      navigateTo(`/pages/member-confirm/index?shiftId=${reminder.itemId}`);
+    } else if (reminder.type === 'pending' && reminder.itemId) {
       confirmHandover(reminder.itemId);
       showToast('已确认', 'success');
     } else if (reminder.type === 'returned' && reminder.itemId) {

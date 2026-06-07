@@ -66,6 +66,7 @@ export interface ReminderItem {
   itemId: string;
   createdAt: string;
   read: boolean;
+  relatedType?: 'handover' | 'shift';
 }
 
 export interface StatsData {

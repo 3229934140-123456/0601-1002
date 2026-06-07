@@ -1,20 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, Input, ScrollView } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import HandoverItemCard from '../../components/HandoverItem';
 import EmptyState from '../../components/EmptyState';
 import useHandoverStore from '../../store/useHandoverStore';
-import { PostType, HandoverStatus } from '../../types/handover';
+import { PostType, HandoverStatus, HandoverItem } from '../../types/handover';
 import { getPostName } from '../../data/mockData';
-import { navigateTo, showToast } from '../../utils';
+import { navigateTo, showToast, showModal } from '../../utils';
 
 const HandoverPage: React.FC = () => {
-  const { handoverItems } = useHandoverStore();
+  const { handoverItems, confirmHandover, completeHandover } = useHandoverStore();
 
   const [searchText, setSearchText] = useState('');
   const [activePost, setActivePost] = useState<PostType | 'all'>('all');
   const [activeStatus, setActiveStatus] = useState<HandoverStatus | 'all'>('all');
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   usePullDownRefresh(() => {
     setTimeout(() => {
@@ -24,7 +26,9 @@ const HandoverPage: React.FC = () => {
   });
 
   useDidShow(() => {
-    // 页面显示时刷新数据
+    if (batchMode) {
+      setSelectedIds([]);
+    }
   });
 
   const filteredItems = useMemo(() => {
@@ -40,6 +44,27 @@ const HandoverPage: React.FC = () => {
       return matchPost && matchStatus && matchSearch;
     });
   }, [handoverItems, activePost, activeStatus, searchText]);
+
+  const canBatchConfirm = useMemo(() => {
+    return selectedIds.some(id => {
+      const item = handoverItems.find(i => i.id === id);
+      return item && item.status === 'pending';
+    });
+  }, [selectedIds, handoverItems]);
+
+  const canBatchComplete = useMemo(() => {
+    return selectedIds.some(id => {
+      const item = handoverItems.find(i => i.id === id);
+      return item && item.status === 'confirmed';
+    });
+  }, [selectedIds, handoverItems]);
+
+  const selectableItems = useMemo(() => {
+    if (activeStatus === 'pending' || activeStatus === 'confirmed') {
+      return filteredItems;
+    }
+    return filteredItems.filter(i => i.status === 'pending' || i.status === 'confirmed');
+  }, [filteredItems, activeStatus]);
 
   const statusList: { key: HandoverStatus | 'all'; label: string }[] = [
     { key: 'all', label: '全部' },
@@ -65,6 +90,109 @@ const HandoverPage: React.FC = () => {
     navigateTo('/pages/create-handover/index');
   };
 
+  const handleToggleBatch = () => {
+    if (batchMode) {
+      setSelectedIds([]);
+    }
+    setBatchMode(!batchMode);
+  };
+
+  const handleToggleSelect = (id: string, item: HandoverItem) => {
+    if (item.status !== 'pending' && item.status !== 'confirmed') {
+      showToast('该状态不支持批量操作');
+      return;
+    }
+    
+    setSelectedIds(prev => 
+      prev.includes(id) 
+        ? prev.filter(i => i !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const selectableIds = selectableItems.map(i => i.id);
+    if (selectedIds.length === selectableIds.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(selectableIds);
+    }
+  };
+
+  const handleBatchConfirm = async () => {
+    if (!canBatchConfirm) return;
+    
+    const confirm = await showModal({
+      title: '批量确认',
+      content: `确认批量处理 ${selectedIds.filter(id => {
+        const item = handoverItems.find(i => i.id === id);
+        return item && item.status === 'pending';
+      }).length} 条待确认事项？`,
+      confirmText: '确认'
+    });
+
+    if (confirm) {
+      let successCount = 0;
+      let failCount = 0;
+      
+      selectedIds.forEach(id => {
+        const item = handoverItems.find(i => i.id === id);
+        if (item && item.status === 'pending') {
+          confirmHandover(id);
+          successCount++;
+        } else {
+          failCount++;
+        }
+      });
+      
+      setSelectedIds([]);
+      setBatchMode(false);
+      
+      if (failCount > 0) {
+        showToast(`成功${successCount}条，${failCount}条状态不符`, 'none');
+      } else {
+        showToast(`已确认${successCount}条`, 'success');
+      }
+    }
+  };
+
+  const handleBatchComplete = async () => {
+    if (!canBatchComplete) return;
+    
+    const confirm = await showModal({
+      title: '批量完成',
+      content: `确认批量标记 ${selectedIds.filter(id => {
+        const item = handoverItems.find(i => i.id === id);
+        return item && item.status === 'confirmed';
+      }).length} 条事项为已完成？`,
+      confirmText: '确认'
+    });
+
+    if (confirm) {
+      let successCount = 0;
+      let failCount = 0;
+      
+      selectedIds.forEach(id => {
+        const item = handoverItems.find(i => i.id === id);
+        if (item && item.status === 'confirmed') {
+          completeHandover(id);
+          successCount++;
+        } else {
+          failCount++;
+        }
+      });
+      
+      setSelectedIds([]);
+      setBatchMode(false);
+      
+      if (failCount > 0) {
+        showToast(`成功${successCount}条，${failCount}条状态不符`, 'none');
+      } else {
+        showToast(`已完成${successCount}条`, 'success');
+      }
+    }
+  };
+
   return (
     <View className={styles.page}>
       <View className={styles.searchBar}>
@@ -76,7 +204,11 @@ const HandoverPage: React.FC = () => {
             value={searchText}
             onInput={(e) => setSearchText(e.detail.value)}
             confirmType="search"
+            disabled={batchMode}
           />
+        </View>
+        <View className={styles.batchBtn} onClick={handleToggleBatch}>
+          <Text>{batchMode ? '取消' : '批量'}</Text>
         </View>
       </View>
 
@@ -85,7 +217,10 @@ const HandoverPage: React.FC = () => {
           <View
             key={post.key}
             className={`${styles.postTab} ${activePost === post.key ? styles.active : ''}`}
-            onClick={() => setActivePost(post.key)}
+            onClick={() => {
+              setActivePost(post.key);
+              if (batchMode) setSelectedIds([]);
+            }}
           >
             <Text>{post.label}</Text>
           </View>
@@ -97,7 +232,10 @@ const HandoverPage: React.FC = () => {
           <View
             key={status.key}
             className={`${styles.statusTab} ${activeStatus === status.key ? styles.active : ''}`}
-            onClick={() => setActiveStatus(status.key)}
+            onClick={() => {
+              setActiveStatus(status.key);
+              if (batchMode) setSelectedIds([]);
+            }}
           >
             <Text>
               {status.label}
@@ -107,6 +245,22 @@ const HandoverPage: React.FC = () => {
         ))}
       </View>
 
+      {batchMode && (
+        <View className={styles.batchBar}>
+          <View className={styles.batchSelectAll} onClick={handleSelectAll}>
+            <View className={`${styles.checkbox} ${selectedIds.length === selectableItems.length && selectableItems.length > 0 ? styles.checked : ''}`}>
+              {selectedIds.length === selectableItems.length && selectableItems.length > 0 && (
+                <Text className={styles.checkIcon}>✓</Text>
+              )}
+            </View>
+            <Text className={styles.batchSelectText}>
+              {selectedIds.length === selectableItems.length && selectableItems.length > 0 ? '取消全选' : '全选'}
+            </Text>
+          </View>
+          <Text className={styles.batchCount}>已选 {selectedIds.length} 项</Text>
+        </View>
+      )}
+
       <ScrollView scrollY className={styles.listContent}>
         <View className={styles.listHeader}>
           <Text className={styles.listTitle}>交接列表</Text>
@@ -115,7 +269,32 @@ const HandoverPage: React.FC = () => {
 
         {filteredItems.length > 0 ? (
           filteredItems.map(item => (
-            <HandoverItemCard key={item.id} item={item} />
+            <View key={item.id} className={styles.listItemWrap}>
+              {batchMode && (
+                <View 
+                  className={`${styles.itemCheckbox} ${
+                    selectedIds.includes(item.id) ? styles.checked : ''
+                  } ${item.status !== 'pending' && item.status !== 'confirmed' ? styles.disabled : ''}`}
+                  onClick={() => handleToggleSelect(item.id, item)}
+                >
+                  {selectedIds.includes(item.id) && (
+                    <Text className={styles.checkIcon}>✓</Text>
+                  )}
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <HandoverItemCard 
+                  item={item} 
+                  onClick={() => {
+                    if (batchMode) {
+                      handleToggleSelect(item.id, item);
+                    } else {
+                      navigateTo(`/pages/item-detail/index?id=${item.id}`);
+                    }
+                  }}
+                />
+              </View>
+            </View>
           ))
         ) : (
           <EmptyState
@@ -126,9 +305,28 @@ const HandoverPage: React.FC = () => {
         )}
       </ScrollView>
 
-      <View className={styles.fab} onClick={handleCreate}>
-        <Text className={styles.fabIcon}>➕</Text>
-      </View>
+      {batchMode && (
+        <View className={styles.batchBottomBar}>
+          <View 
+            className={`${styles.batchActionBtn} ${canBatchConfirm ? styles.primary : ''}`}
+            onClick={handleBatchConfirm}
+          >
+            <Text>批量确认</Text>
+          </View>
+          <View 
+            className={`${styles.batchActionBtn} ${canBatchComplete ? styles.success : ''}`}
+            onClick={handleBatchComplete}
+          >
+            <Text>批量完成</Text>
+          </View>
+        </View>
+      )}
+
+      {!batchMode && (
+        <View className={styles.fab} onClick={handleCreate}>
+          <Text className={styles.fabIcon}>➕</Text>
+        </View>
+      )}
     </View>
   );
 };

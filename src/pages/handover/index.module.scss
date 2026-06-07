@@ -7,15 +7,19 @@
 }
 
 .searchBar {
+  display: flex;
+  align-items: center;
   padding: $spacing-md $page-padding;
   background-color: $color-bg-card;
   position: sticky;
   top: 0;
   z-index: 10;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  gap: $spacing-md;
 }
 
 .searchInputWrapper {
+  flex: 1;
   display: flex;
   align-items: center;
   background-color: $color-bg-gray;
@@ -37,6 +41,15 @@
   background: transparent;
   border: none;
   outline: none;
+}
+
+.batchBtn {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  padding: 12rpx 24rpx;
+  background-color: $color-primary-bg;
+  border-radius: $radius-round;
+  white-space: nowrap;
 }
 
 .postTabs {
@@ -103,6 +116,7 @@
 
 .listContent {
   padding: $spacing-md $page-padding;
+  padding-bottom: 200rpx;
 }
 
 .listHeader {
@@ -119,6 +133,128 @@
   .listCount {
     font-size: $font-size-sm;
     color: $color-text-tertiary;
+  }
+}
+
+.listItemWrap {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.itemCheckbox {
+  width: 44rpx;
+  height: 44rpx;
+  border: 3rpx solid #C9CDD4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16rpx;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &.checked {
+    background-color: $color-primary;
+    border-color: $color-primary;
+
+    .checkIcon {
+      color: $color-text-white;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.4;
+  }
+
+  .checkIcon {
+    font-size: 24rpx;
+    font-weight: bold;
+    color: transparent;
+  }
+}
+
+.batchBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm $page-padding;
+  background-color: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.batchSelectAll {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border: 3rpx solid #C9CDD4;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.checked {
+    background-color: $color-primary;
+    border-color: $color-primary;
+  }
+
+  .checkIcon {
+    font-size: 22rpx;
+    color: $color-text-white;
+    font-weight: bold;
+  }
+}
+
+.batchSelectText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.batchCount {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.batchBottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background-color: $color-bg-card;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+  z-index: 100;
+}
+
+.batchActionBtn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  background-color: $color-bg-gray;
+
+  &.primary {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+  }
+
+  &.success {
+    background: linear-gradient(135deg, #00B42A 0%, #23C343 100%);
+    color: $color-text-white;
   }
 }
 

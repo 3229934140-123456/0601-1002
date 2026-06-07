@@ -23,7 +23,7 @@ const ShiftCard: React.FC<ShiftCardProps> = ({ shift, type = 'full' }) => {
     : 0;
 
   const handleClick = () => {
-    navigateTo(`/pages/item-detail/index?id=${shift.id}`);
+    navigateTo(`/pages/shift-detail/index?shiftId=${shift.id}`);
   };
 
   if (type === 'compact') {

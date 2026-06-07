@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Input, Textarea, Image, ScrollView, Picker } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useRouter } from '@tarojs/taro';
 import styles from './index.module.scss';
 import Tag from '../../components/Tag';
 import useHandoverStore from '../../store/useHandoverStore';
@@ -9,7 +9,8 @@ import { getPriorityName, getPostName } from '../../data/mockData';
 import { showToast, showModal, navigateBack } from '../../utils';
 
 const CreateHandoverPage: React.FC = () => {
-  const { members, templates, shifts, addHandoverItem } = useHandoverStore();
+  const router = useRouter();
+  const { members, templates, shifts, addHandoverItem, getShiftById } = useHandoverStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -23,6 +24,26 @@ const CreateHandoverPage: React.FC = () => {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [shiftId, setShiftId] = useState<string>('');
   const [deadline, setDeadline] = useState('');
+
+  useEffect(() => {
+    const paramShiftId = router.params.shiftId;
+    const paramPost = router.params.post as PostType;
+    
+    if (paramPost && ['service', 'warehouse', 'store'].includes(paramPost)) {
+      setPost(paramPost);
+    }
+    
+    if (paramShiftId) {
+      setShiftId(paramShiftId);
+      const shift = getShiftById(paramShiftId);
+      if (shift) {
+        setPost(shift.post);
+        if (shift.members.length > 0) {
+          setAssignee(shift.members[0]);
+        }
+      }
+    }
+  }, [router.params.shiftId, router.params.post, getShiftById]);
 
   const availableMembers = useMemo(() => {
     return members.filter(m => m.post === post);
@@ -151,8 +172,7 @@ const CreateHandoverPage: React.FC = () => {
     });
 
     if (confirm) {
-      const currentShift = shifts.find(s => s.post === post && s.status === 'ongoing') 
-        || postShifts[0];
+      const finalShiftId = shiftId || postShifts[0]?.id || '';
 
       addHandoverItem({
         title: title.trim(),
@@ -165,7 +185,7 @@ const CreateHandoverPage: React.FC = () => {
         orderNo: orderNo.trim() || undefined,
         attachments,
         tags,
-        shiftId: currentShift?.id || '',
+        shiftId: finalShiftId,
         deadline: deadline || undefined
       });
 

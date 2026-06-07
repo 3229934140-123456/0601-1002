@@ -21,7 +21,7 @@ import {
 const ItemDetailPage: React.FC = () => {
   const router = useRouter();
   const { 
-    getHandoverItemById, 
+    handoverItems, 
     confirmHandover, 
     returnHandover, 
     resendHandover,
@@ -33,7 +33,7 @@ const ItemDetailPage: React.FC = () => {
   const [returnReason, setReturnReason] = useState('');
   const [showReturnInput, setShowReturnInput] = useState(false);
 
-  const item = getHandoverItemById(itemId);
+  const item = handoverItems.find(i => i.id === itemId);
 
   useEffect(() => {
     const id = router.params.id;

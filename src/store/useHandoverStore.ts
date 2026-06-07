@@ -28,6 +28,7 @@ interface HandoverStore {
   members: TeamMember[];
   templates: HandoverTemplate[];
   shiftSummaries: Record<string, string>;
+  shiftConfirmations: Record<string, Record<string, { confirmed: boolean; confirmedAt?: string }>>;
 
   addShift: (shift: Omit<Shift, 'id' | 'handoverCount' | 'completedCount' | 'status'>) => void;
   getShiftsByPost: (post: PostType) => Shift[];
@@ -43,13 +44,17 @@ interface HandoverStore {
   resendHandover: (id: string, updates?: Partial<HandoverItem>) => void;
   completeHandover: (id: string) => void;
 
-  addReminder: (reminder: Omit<ReminderItem, 'id' | 'createdAt' | 'read'>) => void;
+  addReminder: (reminder: Omit<ReminderItem, 'id' | 'createdAt' | 'read'> & { relatedType?: 'handover' | 'shift' }) => void;
   markReminderRead: (id: string) => void;
   markAllRemindersRead: () => void;
   getUnreadCount: () => number;
 
   addShiftSummary: (shiftId: string, summary: string) => void;
   getShiftSummary: (shiftId: string) => string;
+
+  confirmMember: (shiftId: string, memberId: string) => void;
+  getMemberConfirmation: (shiftId: string, memberId: string) => { confirmed: boolean; confirmedAt?: string };
+  getShiftConfirmations: (shiftId: string) => Record<string, { confirmed: boolean; confirmedAt?: string }>;
 
   getStats: () => StatsData;
 }
@@ -65,6 +70,7 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
   members: mockMembers,
   templates: mockTemplates,
   shiftSummaries: {},
+  shiftConfirmations: {},
 
   addShift: (shiftData) => {
     const newShift: Shift = {
@@ -111,7 +117,8 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
       type: 'pending',
       title: '新的交接待确认',
       content: `你有一条新的交接事项待确认：${itemData.title}`,
-      itemId: newItem.id
+      itemId: newItem.id,
+      relatedType: 'handover'
     });
 
     return newItem;
@@ -183,7 +190,8 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
       type: 'returned',
       title: '交接被退回',
       content: `你的交接「${item.title}」被退回，请补充信息后重新提交`,
-      itemId: id
+      itemId: id,
+      relatedType: 'handover'
     });
   },
 
@@ -212,7 +220,8 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
       type: 'pending',
       title: '交接重新提交',
       content: `交接「${item.title}」已补充信息，重新提交待确认`,
-      itemId: id
+      itemId: id,
+      relatedType: 'handover'
     });
   },
 
@@ -285,6 +294,30 @@ const useHandoverStore = create<HandoverStore>((set, get) => ({
 
   getShiftSummary: (shiftId) => {
     return get().shiftSummaries[shiftId] || '';
+  },
+
+  confirmMember: (shiftId, memberId) => {
+    set((state) => ({
+      shiftConfirmations: {
+        ...state.shiftConfirmations,
+        [shiftId]: {
+          ...state.shiftConfirmations[shiftId],
+          [memberId]: {
+            confirmed: true,
+            confirmedAt: new Date().toISOString()
+          }
+        }
+      }
+    }));
+  },
+
+  getMemberConfirmation: (shiftId, memberId) => {
+    const confirmations = get().shiftConfirmations[shiftId];
+    return confirmations?.[memberId] || { confirmed: false };
+  },
+
+  getShiftConfirmations: (shiftId) => {
+    return get().shiftConfirmations[shiftId] || {};
   },
 
   getStats: () => {

@@ -7,8 +7,8 @@ import { PostType } from '../../types/handover';
 import { getPostName } from '../../data/mockData';
 
 const StatsPage: React.FC = () => {
-  const { getStats } = useHandoverStore();
-  const stats = useMemo(() => getStats(), [getStats]);
+  const { handoverItems, getStats } = useHandoverStore();
+  const stats = useMemo(() => getStats(), [handoverItems, getStats]);
 
   useDidShow(() => {
     // 页面显示时刷新统计

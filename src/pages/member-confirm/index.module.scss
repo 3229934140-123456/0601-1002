@@ -3,6 +3,7 @@
 .page {
   min-height: 100vh;
   background-color: $color-bg-page;
+  padding-bottom: 160rpx;
 }
 
 .content {
@@ -50,6 +51,161 @@
     font-size: $font-size-xs;
     opacity: 0.8;
   }
+}
+
+.myConfirmCard {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.myConfirmHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.myConfirmTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.myConfirmStatus {
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.confirmed {
+    background-color: $color-success-bg;
+    color: $color-success;
+  }
+
+  &.pending {
+    background-color: $color-warning-bg;
+    color: $color-warning;
+  }
+}
+
+.myConfirmInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.myAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+}
+
+.myInfo {
+  flex: 1;
+}
+
+.myName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.myRole {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.confirmBtn {
+  padding: 16rpx 32rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-round;
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.confirmTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: right;
+}
+
+.myItemsSection {
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.myItemsTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.myItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.myItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background-color: $color-bg-gray;
+  border-radius: $radius-md;
+}
+
+.myItemTitle {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  margin-right: $spacing-sm;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.myItemStatus {
+  font-size: 20rpx;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+
+  &.status-pending {
+    background-color: $color-warning-bg;
+    color: $color-warning;
+  }
+
+  &.status-confirmed {
+    background-color: $color-primary-bg;
+    color: $color-primary;
+  }
+
+  &.status-returned {
+    background-color: $color-error-bg;
+    color: $color-error;
+  }
+
+  &.status-completed {
+    background-color: $color-success-bg;
+    color: $color-success;
+  }
+}
+
+.myItemMore {
+  text-align: center;
+  padding: $spacing-sm 0;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
 }
 
 .memberList {

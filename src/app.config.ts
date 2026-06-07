@@ -11,7 +11,8 @@ export default defineAppConfig({
     'pages/create-shift/index',
     'pages/history/index',
     'pages/export/index',
-    'pages/shift-summary/index'
+    'pages/shift-summary/index',
+    'pages/shift-detail/index'
   ],
   window: {
     backgroundTextStyle: 'light',
