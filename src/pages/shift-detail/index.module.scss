@@ -381,6 +381,138 @@
   color: $color-text-tertiary;
 }
 
+.activityFilterBar {
+  display: flex;
+  white-space: nowrap;
+  padding: $spacing-sm 0;
+  margin-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.activityFilterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  margin-right: $spacing-sm;
+  border-radius: $radius-round;
+  background-color: $color-bg-gray;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  flex-shrink: 0;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &.active {
+    background-color: $color-primary-bg;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.filterIcon {
+  font-size: 24rpx;
+}
+
+.filterLabel {
+  font-size: $font-size-xs;
+}
+
+.timelineGroup {
+  position: relative;
+  padding-bottom: $spacing-md;
+
+  &.last {
+    padding-bottom: 0;
+  }
+}
+
+.chainHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  padding-left: 60rpx;
+}
+
+.chainBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  background: linear-gradient(135deg, $color-warning-bg 0%, lighten($color-warning-bg, 5%) 100%);
+  border-radius: $radius-round;
+  font-size: 22rpx;
+  color: $color-warning;
+  font-weight: $font-weight-medium;
+}
+
+.chainTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.chainList {
+  background-color: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-sm $spacing-sm 20rpx;
+  margin-left: 20rpx;
+  position: relative;
+}
+
+.chainItem {
+  padding-left: 36rpx;
+
+  &.lastChainItem {
+    padding-bottom: 0;
+
+    .timelineContent {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+
+  .timelineDot {
+    width: 36rpx;
+    height: 36rpx;
+    top: 2rpx;
+  }
+
+  .timelineIcon {
+    font-size: 20rpx;
+  }
+
+  &:not(.lastChainItem)::before {
+    content: '';
+    position: absolute;
+    left: 17rpx;
+    top: 38rpx;
+    width: 2rpx;
+    height: calc(100% - 36rpx);
+    background-color: $color-divider;
+  }
+}
+
+.timelineFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.expandBtn {
+  text-align: center;
+  padding-top: $spacing-md;
+  margin-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+
+  text {
+    font-size: $font-size-xs;
+    color: $color-primary;
+  }
+}
+
 .actionRow {
   display: flex;
   gap: $spacing-md;

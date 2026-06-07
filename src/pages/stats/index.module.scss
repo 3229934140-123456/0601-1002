@@ -535,3 +535,155 @@
   color: $color-text-secondary;
   margin-bottom: 8rpx;
 }
+
+.tagItem {
+  &.selected {
+    background-color: $color-primary;
+    color: $color-text-white;
+
+    .tagCount {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: $color-text-white;
+    }
+  }
+}
+
+.shiftTagsSection {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.shiftTagsLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.shiftTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.shiftTagItem {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  background-color: $color-primary-bg;
+  border-radius: $radius-round;
+  cursor: pointer;
+}
+
+.shiftTagText {
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+.shiftTagCount {
+  font-size: 20rpx;
+  color: $color-primary;
+  background-color: rgba(43, 106, 255, 0.15);
+  padding: 2rpx 8rpx;
+  border-radius: $radius-round;
+}
+
+.taggedItemsSection {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.taggedItemsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.taggedItemsTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.closeTagBtn {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  padding: 6rpx 16rpx;
+  background-color: $color-bg-gray;
+  border-radius: $radius-round;
+}
+
+.taggedItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.taggedItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+  background-color: $color-bg-page;
+  border-radius: $radius-md;
+  cursor: pointer;
+}
+
+.taggedItemInfo {
+  flex: 1;
+  min-width: 0;
+  margin-right: $spacing-md;
+}
+
+.taggedItemTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taggedItemDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taggedItemStatus {
+  font-size: 22rpx;
+  padding: 6rpx 16rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+
+  &.status-pending {
+    color: $color-warning;
+    background-color: $color-warning-bg;
+  }
+
+  &.status-confirmed {
+    color: $color-primary;
+    background-color: $color-primary-bg;
+  }
+
+  &.status-returned {
+    color: $color-error;
+    background-color: $color-error-bg;
+  }
+
+  &.status-completed {
+    color: $color-success;
+    background-color: $color-success-bg;
+  }
+}

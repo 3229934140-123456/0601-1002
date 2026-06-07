@@ -16,6 +16,8 @@ const ShiftDetailPage: React.FC = () => {
 
   const [shiftId, setShiftId] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'confirmed' | 'returned' | 'completed'>('all');
+  const [activityFilter, setActivityFilter] = useState<string>('all');
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   useDidShow(() => {
     const id = router.params.shiftId;
@@ -32,6 +34,86 @@ const ShiftDetailPage: React.FC = () => {
     ), 
     [activities, shiftId]
   );
+
+  const activityFilterOptions = [
+    { key: 'all', label: '全部', icon: '📋' },
+    { key: 'create', label: '新建', icon: '📝' },
+    { key: 'confirm', label: '确认', icon: '✅' },
+    { key: 'return', label: '退回', icon: '↩️' },
+    { key: 'resend', label: '重发', icon: '🔄' },
+    { key: 'complete', label: '完成', icon: '🏁' },
+    { key: 'member_confirm', label: '成员确认', icon: '👤' },
+    { key: 'remind', label: '提醒', icon: '🔔' },
+  ];
+
+  const filteredActivities = useMemo(() => {
+    if (activityFilter === 'all') return shiftActivities;
+    return shiftActivities.filter(a => a.type === activityFilter);
+  }, [shiftActivities, activityFilter]);
+
+  // 将退回和对应的重发/确认串联成组
+  const activityGroups = useMemo(() => {
+    const groups: { id: string; activities: ActivityItem[]; isReturnChain: boolean }[] = [];
+    const processedIds = new Set<string>();
+
+    // 先按时间正序排列，便于查找关联
+    const sortedActivities = [...filteredActivities].sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    sortedActivities.forEach(activity => {
+      if (processedIds.has(activity.id)) return;
+
+      // 如果是退回操作，查找后续的重发和确认，组成一个链
+      if (activity.type === 'return' && activity.itemId) {
+        const chain: ActivityItem[] = [activity];
+        processedIds.add(activity.id);
+
+        // 查找后续的重发和确认
+        let currentItemId = activity.itemId;
+        let foundMore = true;
+        
+        while (foundMore) {
+          foundMore = false;
+          const nextActivity = sortedActivities.find(a => 
+            !processedIds.has(a.id) && 
+            a.itemId === currentItemId && 
+            (a.type === 'resend' || a.type === 'confirm') &&
+            new Date(a.createdAt).getTime() > new Date(chain[chain.length - 1].createdAt).getTime()
+          );
+          
+          if (nextActivity) {
+            chain.push(nextActivity);
+            processedIds.add(nextActivity.id);
+            if (nextActivity.type === 'resend') {
+              // 重发后继续找确认
+              foundMore = true;
+            }
+          }
+        }
+
+        groups.push({
+          id: `chain-${activity.id}`,
+          activities: chain,
+          isReturnChain: true
+        });
+      } else {
+        groups.push({
+          id: activity.id,
+          activities: [activity],
+          isReturnChain: false
+        });
+        processedIds.add(activity.id);
+      }
+    });
+
+    // 再按时间倒序排列显示
+    return groups.sort((a, b) => {
+      const aTime = new Date(a.activities[a.activities.length - 1].createdAt).getTime();
+      const bTime = new Date(b.activities[b.activities.length - 1].createdAt).getTime();
+      return bTime - aTime;
+    });
+  }, [filteredActivities]);
 
   const filteredItems = useMemo(() => {
     if (activeTab === 'all') return shiftHandoverItems;
@@ -202,34 +284,101 @@ const ShiftDetailPage: React.FC = () => {
         <View className={styles.timelineCard}>
           <View className={styles.cardHeader}>
             <Text className={styles.cardTitle}>⏱️ 交接动态</Text>
-            <Text className={styles.cardSubtitle}>共 {shiftActivities.length} 条</Text>
+            <Text className={styles.cardSubtitle}>共 {filteredActivities.length} 条</Text>
           </View>
+
+          <ScrollView scrollX className={styles.activityFilterBar}>
+            {activityFilterOptions.map(option => (
+              <View
+                key={option.key}
+                className={`${styles.activityFilterChip} ${activityFilter === option.key ? styles.active : ''}`}
+                onClick={() => setActivityFilter(option.key)}
+              >
+                <Text className={styles.filterIcon}>{option.icon}</Text>
+                <Text className={styles.filterLabel}>{option.label}</Text>
+              </View>
+            ))}
+          </ScrollView>
           
-          {shiftActivities.length > 0 ? (
+          {filteredActivities.length > 0 ? (
             <View className={styles.timelineList}>
-              {shiftActivities.slice(0, 8).map((activity, index) => (
-                <View 
-                  key={activity.id} 
-                  className={`${styles.timelineItem} ${index === shiftActivities.length - 1 || index === 7 ? styles.last : ''}`}
-                  onClick={() => handleActivityClick(activity)}
-                >
-                  <View className={styles.timelineDot}>
-                    <Text className={styles.timelineIcon}>{getActivityIcon(activity.type)}</Text>
-                  </View>
-                  <View className={styles.timelineContent}>
-                    <View className={styles.timelineHeader}>
-                      <Text className={styles.timelineTitle}>{activity.title}</Text>
-                      <Text className={styles.timelineTime}>{formatTime(activity.createdAt)}</Text>
+              {activityGroups
+                .slice(0, showAllActivities ? undefined : 8)
+                .map((group, groupIndex) => {
+                  const isLastGroup = groupIndex === Math.min(activityGroups.length - 1, showAllActivities ? activityGroups.length - 1 : 7);
+                  
+                  if (group.isReturnChain && group.activities.length > 1) {
+                    return (
+                      <View 
+                        key={group.id} 
+                        className={`${styles.timelineGroup} ${isLastGroup ? styles.last : ''}`}
+                      >
+                        <View className={styles.chainHeader}>
+                          <View className={styles.chainBadge}>
+                            <Text>🔗 事项流转</Text>
+                          </View>
+                          <Text className={styles.chainTime}>
+                            {formatTime(group.activities[group.activities.length - 1].createdAt)}
+                          </Text>
+                        </View>
+                        <View className={styles.chainList}>
+                          {group.activities.map((activity, actIndex) => (
+                            <View 
+                              key={activity.id}
+                              className={`${styles.timelineItem} ${styles.chainItem} ${actIndex === group.activities.length - 1 ? styles.lastChainItem : ''}`}
+                              onClick={() => handleActivityClick(activity)}
+                            >
+                              <View className={styles.timelineDot}>
+                                <Text className={styles.timelineIcon}>{getActivityIcon(activity.type)}</Text>
+                              </View>
+                              <View className={styles.timelineContent}>
+                                <View className={styles.timelineHeader}>
+                                  <Text className={styles.timelineTitle}>{activity.title}</Text>
+                                </View>
+                                {activity.description && (
+                                  <Text className={styles.timelineDesc}>{activity.description}</Text>
+                                )}
+                                <View className={styles.timelineFooter}>
+                                  <Text className={styles.timelineOperator}>
+                                    {activity.operator.name}
+                                  </Text>
+                                  <Text className={styles.timelineTime}>
+                                    {formatTime(activity.createdAt)}
+                                  </Text>
+                                </View>
+                              </View>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    );
+                  }
+                  
+                  const activity = group.activities[0];
+                  return (
+                    <View 
+                      key={activity.id} 
+                      className={`${styles.timelineItem} ${isLastGroup ? styles.last : ''}`}
+                      onClick={() => handleActivityClick(activity)}
+                    >
+                      <View className={styles.timelineDot}>
+                        <Text className={styles.timelineIcon}>{getActivityIcon(activity.type)}</Text>
+                      </View>
+                      <View className={styles.timelineContent}>
+                        <View className={styles.timelineHeader}>
+                          <Text className={styles.timelineTitle}>{activity.title}</Text>
+                          <Text className={styles.timelineTime}>{formatTime(activity.createdAt)}</Text>
+                        </View>
+                        {activity.description && (
+                          <Text className={styles.timelineDesc}>{activity.description}</Text>
+                        )}
+                        <Text className={styles.timelineOperator}>
+                          {activity.operator.name}
+                        </Text>
+                      </View>
                     </View>
-                    {activity.description && (
-                      <Text className={styles.timelineDesc}>{activity.description}</Text>
-                    )}
-                    <Text className={styles.timelineOperator}>
-                      {activity.operator.name}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                  );
+                })}
             </View>
           ) : (
             <EmptyState 
@@ -237,6 +386,15 @@ const ShiftDetailPage: React.FC = () => {
               title="暂无动态" 
               description="新建交接后将显示动态记录"
             />
+          )}
+
+          {filteredActivities.length > 8 && (
+            <View 
+              className={styles.expandBtn}
+              onClick={() => setShowAllActivities(!showAllActivities)}
+            >
+              <Text>{showAllActivities ? '收起' : `展开全部（${filteredActivities.length}条）`}</Text>
+            </View>
           )}
         </View>
 

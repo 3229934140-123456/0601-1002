@@ -22,6 +22,8 @@ const MemberConfirmPage: React.FC = () => {
 
   const [shiftId, setShiftId] = useState('');
   const [currentMemberId, setCurrentMemberId] = useState('');
+  const [scrollIntoView, setScrollIntoView] = useState('');
+  const [isFromReminder, setIsFromReminder] = useState(false);
 
   useEffect(() => {
     const id = router.params.shiftId;
@@ -31,6 +33,11 @@ const MemberConfirmPage: React.FC = () => {
     const memberId = router.params.memberId;
     if (memberId) {
       setCurrentMemberId(memberId);
+      setIsFromReminder(true);
+      // 延迟一下让页面渲染完成后再滚动
+      setTimeout(() => {
+        setScrollIntoView('my-confirm-card');
+      }, 300);
     } else {
       setCurrentMemberId(members[0]?.id || '');
     }
@@ -49,13 +56,10 @@ const MemberConfirmPage: React.FC = () => {
     
     return shift.members.map(member => {
       const confirmation = confirmations[member.id];
-      const mockConfirmed = member.id === shift.members[0]?.id || member.id === shift.members[1]?.id;
-      const mockTime = mockConfirmed ? new Date(Date.now() - 3600000).toISOString() : undefined;
-      
       return {
         ...member,
-        confirmed: confirmation?.confirmed || (mockConfirmed && !confirmation),
-        confirmedAt: confirmation?.confirmedAt || mockTime
+        confirmed: confirmation?.confirmed || false,
+        confirmedAt: confirmation?.confirmedAt
       };
     });
   }, [shift, confirmations]);
@@ -73,6 +77,23 @@ const MemberConfirmPage: React.FC = () => {
   const remindActivities = useMemo(() => {
     return activities.filter(a => a.shiftId === shiftId && a.type === 'remind');
   }, [activities, shiftId]);
+
+  const memberRemindRecords = useMemo(() => {
+    if (!shift) return [];
+    
+    return shift.members.map(member => {
+      const memberReminds = remindActivities.filter(a => a.memberId === member.id);
+      const lastRemind = memberReminds.length > 0 
+        ? memberReminds.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+        : null;
+      
+      return {
+        member,
+        remindCount: memberReminds.length,
+        lastRemindAt: lastRemind?.createdAt
+      };
+    });
+  }, [shift, remindActivities]);
 
   const handleMyConfirm = async () => {
     if (!shift || myConfirmation?.confirmed) return;
@@ -97,6 +118,8 @@ const MemberConfirmPage: React.FC = () => {
       return;
     }
 
+    const { addActivity } = useHandoverStore.getState();
+
     unconfirmedMembers.forEach(member => {
       addReminder({
         type: 'system',
@@ -105,16 +128,16 @@ const MemberConfirmPage: React.FC = () => {
         itemId: shiftId,
         relatedType: 'shift'
       });
-    });
 
-    // 添加提醒动态
-    const { addActivity } = useHandoverStore.getState();
-    addActivity({
-      shiftId,
-      type: 'remind',
-      operator: currentMember,
-      title: '一键提醒',
-      description: `提醒${unconfirmedMembers.length}位未确认成员`
+      // 为每个成员单独记录提醒动态
+      addActivity({
+        shiftId,
+        type: 'remind',
+        memberId: member.id,
+        operator: currentMember,
+        title: '提醒确认',
+        description: `提醒 ${member.name} 确认交接`
+      });
     });
 
     showToast(`已提醒${unconfirmedMembers.length}位成员`, 'success');
@@ -139,7 +162,7 @@ const MemberConfirmPage: React.FC = () => {
   }
 
   return (
-    <ScrollView scrollY className={styles.page}>
+    <ScrollView scrollY className={styles.page} scroll-into-view={scrollIntoView} scroll-with-animation>
       <View className={styles.content}>
         <View className={styles.summaryCard}>
           <Text className={styles.shiftName}>
@@ -209,7 +232,10 @@ const MemberConfirmPage: React.FC = () => {
         )}
 
         {currentMember && (
-          <View className={styles.myConfirmCard}>
+          <View 
+            id="my-confirm-card"
+            className={`${styles.myConfirmCard} ${isFromReminder && !isLeader ? styles.highlightCard : ''}`}
+          >
             <View className={styles.myConfirmHeader}>
               <Text className={styles.myConfirmTitle}>
                 {isLeader ? '我的确认（班长）' : '我的确认'}
@@ -281,6 +307,52 @@ const MemberConfirmPage: React.FC = () => {
             </View>
             <View className={styles.summaryContent}>
               <Text className={styles.summaryText} numberOfLines={3}>{shiftSummary}</Text>
+            </View>
+          </View>
+        )}
+
+        {isLeader && remindActivities.length > 0 && (
+          <View className={styles.remindTrackSection}>
+            <View className={styles.sectionHeader}>
+              <Text className={styles.sectionTitle}>📣 提醒跟踪记录</Text>
+              <Text className={styles.sectionSubtitle}>共 {remindActivities.length} 次提醒</Text>
+            </View>
+            <View className={styles.remindTrackList}>
+              {memberRemindRecords
+                .filter(r => r.remindCount > 0)
+                .map(record => {
+                  const memberConfirm = memberConfirmList.find(m => m.id === record.member.id);
+                  return (
+                    <View key={record.member.id} className={styles.remindTrackItem}>
+                      <Image 
+                        className={styles.remindTrackAvatar} 
+                        src={record.member.avatar} 
+                        mode="aspectFill" 
+                      />
+                      <View className={styles.remindTrackInfo}>
+                        <View className={styles.remindTrackHeader}>
+                          <Text className={styles.remindTrackName}>{record.member.name}</Text>
+                          <View className={`${styles.remindTrackStatus} ${memberConfirm?.confirmed ? 'confirmed' : 'pending'}`}>
+                            <Text>{memberConfirm?.confirmed ? '已确认' : '待确认'}</Text>
+                          </View>
+                        </View>
+                        <Text className={styles.remindTrackCount}>
+                          已提醒 {record.remindCount} 次
+                        </Text>
+                        {record.lastRemindAt && (
+                          <Text className={styles.remindTrackTime}>
+                            最后提醒：{formatFullDate(record.lastRemindAt)}
+                          </Text>
+                        )}
+                        {memberConfirm?.confirmedAt && (
+                          <Text className={styles.remindTrackConfirmed}>
+                            确认时间：{formatFullDate(memberConfirm.confirmedAt)}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
             </View>
           </View>
         )}

@@ -174,6 +174,12 @@
   padding: $spacing-lg;
   margin-bottom: $spacing-md;
   box-shadow: $shadow-card;
+  transition: all 0.3s ease;
+
+  &.highlightCard {
+    border: 4rpx solid $color-primary;
+    box-shadow: 0 8rpx 32rpx rgba(43, 106, 255, 0.2);
+  }
 }
 
 .myConfirmHeader {
@@ -420,6 +426,106 @@
   color: $color-text-primary;
   font-weight: $font-weight-medium;
   margin-bottom: 8rpx;
+  display: block;
+}
+
+.remindTrackSection {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.sectionSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.remindTrackList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.remindTrackItem {
+  display: flex;
+  align-items: flex-start;
+  padding: $spacing-md;
+  background-color: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.remindTrackAvatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  margin-right: $spacing-md;
+}
+
+.remindTrackInfo {
+  flex: 1;
+}
+
+.remindTrackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.remindTrackName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.remindTrackStatus {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+
+  &.confirmed {
+    color: $color-success;
+    background-color: $color-success-bg;
+  }
+
+  &.pending {
+    color: $color-warning;
+    background-color: $color-warning-bg;
+  }
+}
+
+.remindTrackCount {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.remindTrackTime {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.remindTrackConfirmed {
+  font-size: 22rpx;
+  color: $color-success;
   display: block;
 }
 

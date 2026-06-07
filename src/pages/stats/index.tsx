@@ -8,11 +8,12 @@ import { getPostName } from '../../data/mockData';
 import { navigateTo } from '../../utils';
 
 const StatsPage: React.FC = () => {
-  const { handoverItems, shifts, getStats } = useHandoverStore();
+  const { handoverItems, shifts, shiftConfirmations, getStats } = useHandoverStore();
   const stats = useMemo(() => getStats(), [handoverItems, getStats]);
   
   const [filterPost, setFilterPost] = useState<PostType | 'all'>('all');
   const [filterShift, setFilterShift] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('');
 
   useDidShow(() => {
     // 页面显示时刷新统计
@@ -55,6 +56,20 @@ const StatsPage: React.FC = () => {
     return { total, pending, confirmed, returned, completed, completedRate, returnRate, overdueRate, overdueCount: overdueItems.length };
   }, [filteredHandoverItems]);
 
+  // 筛选范围内的高频标签
+  const filteredTopTags = useMemo(() => {
+    const tagCount: Record<string, number> = {};
+    filteredHandoverItems.forEach(item => {
+      item.tags.forEach(tag => {
+        tagCount[tag] = (tagCount[tag] || 0) + 1;
+      });
+    });
+    return Object.entries(tagCount)
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [filteredHandoverItems]);
+
   const shiftStats = useMemo(() => {
     const targetShifts = filterShift === 'all' ? filteredShifts : filteredShifts.filter(s => s.id === filterShift);
     return targetShifts.map(shift => {
@@ -74,6 +89,22 @@ const StatsPage: React.FC = () => {
         return new Date(i.deadline).getTime() < Date.now();
       });
       const hasOverdueRisk = overdueItems.length > 0;
+
+      // 未确认成员
+      const confirmations = shiftConfirmations[shift.id] || {};
+      const unconfirmedMembers = shift.members.filter(m => !confirmations[m.id]?.confirmed);
+
+      // 班次高频标签
+      const shiftTagCount: Record<string, number> = {};
+      shiftItems.forEach(item => {
+        item.tags.forEach(tag => {
+          shiftTagCount[tag] = (shiftTagCount[tag] || 0) + 1;
+        });
+      });
+      const topTags = Object.entries(shiftTagCount)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
       
       return {
         shift,
@@ -85,10 +116,12 @@ const StatsPage: React.FC = () => {
         completedRate,
         returnRate,
         hasOverdueRisk,
-        overdueCount: overdueItems.length
+        overdueCount: overdueItems.length,
+        unconfirmedCount: unconfirmedMembers.length,
+        topTags
       };
     }).sort((a, b) => b.total - a.total);
-  }, [filteredShifts, filteredHandoverItems, filterShift]);
+  }, [filteredShifts, filteredHandoverItems, filterShift, shiftConfirmations]);
 
   const getPostIcon = (post: PostType): string => {
     const iconMap = { service: '🎧', warehouse: '📦', store: '🏪' };
@@ -129,7 +162,7 @@ const StatsPage: React.FC = () => {
             </ScrollView>
           </View>
           
-          {filterPost !== 'all' && filteredShifts.length > 0 && (
+          {filteredShifts.length > 0 && (
             <View className={styles.filterRow}>
               <Text className={styles.filterLabel}>班次</Text>
               <ScrollView scrollX className={styles.filterOptions}>
@@ -297,10 +330,37 @@ const StatsPage: React.FC = () => {
                     <Text className={styles.rateLabel}>退回率</Text>
                     <Text className={`${styles.rateValue} ${styles.warning}`}>{item.returnRate}%</Text>
                   </View>
+                  <View className={styles.rateItem}>
+                    <Text className={styles.rateLabel}>未确认成员</Text>
+                    <Text className={`${styles.rateValue} ${item.unconfirmedCount > 0 ? styles.danger : ''}`}>
+                      {item.unconfirmedCount}人
+                    </Text>
+                  </View>
                   <View className={styles.viewDetail}>
                     <Text>查看详情 →</Text>
                   </View>
                 </View>
+
+                {item.topTags.length > 0 && (
+                  <View className={styles.shiftTagsSection}>
+                    <Text className={styles.shiftTagsLabel}>高频标签</Text>
+                    <View className={styles.shiftTags}>
+                      {item.topTags.map(tag => (
+                        <View 
+                          key={tag.tag} 
+                          className={styles.shiftTagItem}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTag(tag.tag);
+                          }}
+                        >
+                          <Text className={styles.shiftTagText}>{tag.tag}</Text>
+                          <Text className={styles.shiftTagCount}>{tag.count}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </View>
             ))
           ) : (
@@ -332,11 +392,12 @@ const StatsPage: React.FC = () => {
         <Text className={styles.sectionTitle}>高频问题标签</Text>
         <View className={styles.tagsSection}>
           <View className={styles.tagCloud}>
-            {stats.topTags.length > 0 ? (
-              stats.topTags.map((tag, index) => (
+            {filteredTopTags.length > 0 ? (
+              filteredTopTags.map((tag, index) => (
                 <View
                   key={tag.tag}
-                  className={`${styles.tagItem} ${index < 3 ? styles.hot : ''}`}
+                  className={`${styles.tagItem} ${index < 3 ? styles.hot : ''} ${selectedTag === tag.tag ? styles.selected : ''}`}
+                  onClick={() => setSelectedTag(selectedTag === tag.tag ? '' : tag.tag)}
                 >
                   <Text>{tag.tag}</Text>
                   <Text className={styles.tagCount}>{tag.count}</Text>
@@ -349,6 +410,45 @@ const StatsPage: React.FC = () => {
             )}
           </View>
         </View>
+
+        {selectedTag && (
+          <View className={styles.taggedItemsSection}>
+            <View className={styles.taggedItemsHeader}>
+              <Text className={styles.taggedItemsTitle}>
+                🏷️ 「{selectedTag}」相关事项
+              </Text>
+              <Text 
+                className={styles.closeTagBtn}
+                onClick={() => setSelectedTag('')}
+              >
+                关闭
+              </Text>
+            </View>
+            <View className={styles.taggedItemsList}>
+              {filteredHandoverItems
+                .filter(item => item.tags.includes(selectedTag))
+                .map(item => (
+                  <View 
+                    key={item.id} 
+                    className={styles.taggedItem}
+                    onClick={() => navigateTo(`/pages/item-detail/index?id=${item.id}`)}
+                  >
+                    <View className={styles.taggedItemInfo}>
+                      <Text className={styles.taggedItemTitle} numberOfLines={1}>{item.title}</Text>
+                      <Text className={styles.taggedItemDesc} numberOfLines={1}>{item.description}</Text>
+                    </View>
+                    <View className={`${styles.taggedItemStatus} status-${item.status}`}>
+                      <Text>
+                        {item.status === 'pending' ? '待确认' : 
+                         item.status === 'confirmed' ? '已确认' : 
+                         item.status === 'returned' ? '已退回' : '已完成'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </View>
+        )}
 
         <Text className={styles.sectionTitle}>近7天趋势</Text>
         <View className={styles.trendSection}>
