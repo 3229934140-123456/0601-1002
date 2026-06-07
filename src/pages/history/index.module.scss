@@ -1,0 +1,193 @@
+.page {
+  min-height: 100vh;
+  background-color: #F5F7FA;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  height: 88rpx;
+  background-color: #ffffff;
+  border-bottom: 1rpx solid #E5E6EB;
+}
+
+.backBtn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backIcon {
+  font-size: 36rpx;
+  color: #1D2129;
+}
+
+.headerTitle {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.exportBtn {
+  font-size: 28rpx;
+  color: #2B6AFF;
+  padding: 8rpx 16rpx;
+}
+
+.searchSection {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  gap: 24rpx;
+  background-color: #ffffff;
+  border-bottom: 1rpx solid #E5E6EB;
+}
+
+.searchBox {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #F2F3F5;
+  border-radius: 48rpx;
+  padding: 16rpx 24rpx;
+}
+
+.searchIcon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+  color: #86909C;
+}
+
+.searchInput {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1D2129;
+  background: transparent;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  background-color: #F2F3F5;
+  border-radius: 24rpx;
+}
+
+.filterBtn.active {
+  background-color: #E8F0FF;
+  color: #2B6AFF;
+}
+
+.filterIcon {
+  font-size: 24rpx;
+}
+
+.filterText {
+  font-size: 26rpx;
+  color: #4E5969;
+}
+
+.filterBtn.active .filterText {
+  color: #2B6AFF;
+}
+
+.filterPanel {
+  background-color: #ffffff;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #E5E6EB;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.filterRow:last-child {
+  margin-bottom: 0;
+}
+
+.filterLabel {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #4E5969;
+  flex-shrink: 0;
+}
+
+.filterInput {
+  flex: 1;
+  height: 72rpx;
+  background-color: #F2F3F5;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+}
+
+.filterSelect {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.postTag {
+  padding: 12rpx 24rpx;
+  background-color: #F2F3F5;
+  border-radius: 24rpx;
+  font-size: 26rpx;
+  color: #4E5969;
+}
+
+.postTag.active {
+  background-color: #E8F0FF;
+  color: #2B6AFF;
+}
+
+.datePicker {
+  flex: 1;
+  height: 72rpx;
+  background-color: #F2F3F5;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+  display: flex;
+  align-items: center;
+}
+
+.filterActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16rpx;
+}
+
+.resetBtn {
+  padding: 16rpx 48rpx;
+  background-color: #F2F3F5;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  color: #4E5969;
+}
+
+.resultHeader {
+  padding: 24rpx 32rpx;
+  background-color: #F5F7FA;
+}
+
+.resultCount {
+  font-size: 26rpx;
+  color: #86909C;
+}
+
+.listContent {
+  flex: 1;
+  padding: 0 32rpx 32rpx;
+}

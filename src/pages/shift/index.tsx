@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
-import Taro, { usePullDownRefresh } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import ShiftCard from '../../components/ShiftCard';
-import { mockShifts, mockMembers, getPostName } from '../../data/mockData';
-import { PostType, Shift } from '../../types/handover';
+import useHandoverStore from '../../store/useHandoverStore';
+import { PostType } from '../../types/handover';
+import { getPostName } from '../../data/mockData';
 import { navigateTo, switchTab, showToast } from '../../utils';
 
 const ShiftPage: React.FC = () => {
+  const { shifts, handoverItems } = useHandoverStore();
   const [activePost, setActivePost] = useState<PostType>('service');
-  const [shifts, setShifts] = useState<Shift[]>(mockShifts);
   const [today, setToday] = useState('');
   const [weekday, setWeekday] = useState('');
 
@@ -29,18 +30,52 @@ const ShiftPage: React.FC = () => {
     }, 1000);
   });
 
-  const filteredShifts = shifts.filter(s => s.post === activePost);
-  const currentShift = filteredShifts.find(s => s.status === 'ongoing');
-  const otherShifts = filteredShifts.filter(s => s.status !== 'ongoing');
+  useDidShow(() => {
+    // 页面显示时刷新数据
+  });
 
-  const todayAllShifts = shifts;
+  const filteredShifts = useMemo(() => {
+    return shifts.filter(s => s.post === activePost);
+  }, [shifts, activePost]);
+
+  const currentShift = useMemo(() => {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    return filteredShifts.find(s => {
+      const [startH, startM] = s.startTime.split(':').map(Number);
+      const [endH, endM] = s.endTime.split(':').map(Number);
+      const startTime = startH * 60 + startM;
+      const endTime = endH * 60 + endM;
+      return currentTime >= startTime && currentTime < endTime;
+    }) || filteredShifts[0];
+  }, [filteredShifts]);
+
+  const otherShifts = useMemo(() => {
+    return filteredShifts.filter(s => s.id !== currentShift?.id);
+  }, [filteredShifts, currentShift]);
+
+  const statsData = useMemo(() => {
+    const postItems = handoverItems.filter(item => item.post === activePost);
+    const postShifts = shifts.filter(s => s.post === activePost);
+    const completedCount = postItems.filter(
+      i => i.status === 'confirmed' || i.status === 'completed'
+    ).length;
+    const totalMembers = postShifts.reduce((acc, s) => acc + s.members.length, 0);
+    
+    return {
+      total: postItems.length,
+      completed: completedCount,
+      members: totalMembers
+    };
+  }, [handoverItems, shifts, activePost]);
 
   const handlePostChange = (post: PostType) => {
     setActivePost(post);
   };
 
   const handleCreateShift = () => {
-    showToast('创建班次功能开发中');
+    navigateTo('/pages/create-shift/index');
   };
 
   const handleCreateHandover = () => {
@@ -48,17 +83,19 @@ const ShiftPage: React.FC = () => {
   };
 
   const handleViewHistory = () => {
-    switchTab('/pages/handover/index');
+    navigateTo('/pages/history/index');
   };
 
   const handleExport = () => {
-    showToast('导出功能开发中');
+    navigateTo('/pages/export/index');
   };
 
-  const statsData = {
-    total: filteredShifts.reduce((acc, s) => acc + s.handoverCount, 0),
-    completed: filteredShifts.reduce((acc, s) => acc + s.completedCount, 0),
-    members: filteredShifts.reduce((acc, s) => acc + s.members.length, 0)
+  const handleShiftSummary = () => {
+    if (currentShift) {
+      navigateTo(`/pages/shift-summary/index?shiftId=${currentShift.id}`);
+    } else {
+      showToast('请先选择班次');
+    }
   };
 
   const quickActions = [
@@ -66,6 +103,7 @@ const ShiftPage: React.FC = () => {
     { icon: '📝', text: '新建交接', type: 'green', action: handleCreateHandover },
     { icon: '📊', text: '历史记录', type: 'orange', action: handleViewHistory },
     { icon: '📤', text: '导出', type: 'gray', action: handleExport },
+    { icon: '📋', text: '班后总结', type: 'purple', action: handleShiftSummary },
   ];
 
   return (
@@ -150,11 +188,17 @@ const ShiftPage: React.FC = () => {
         <View className={styles.todayList}>
           <View className={styles.listTitle}>
             <Text className={styles.titleText}>今日所有班次</Text>
-            <Text className={styles.countText}>共 {todayAllShifts.length} 个</Text>
+            <Text className={styles.countText}>共 {filteredShifts.length} 个</Text>
           </View>
-          {todayAllShifts.map(shift => (
-            <ShiftCard key={shift.id} shift={shift} type="full" />
-          ))}
+          {filteredShifts.length > 0 ? (
+            filteredShifts.map(shift => (
+              <ShiftCard key={shift.id} shift={shift} type="full" />
+            ))
+          ) : (
+            <View style={{ padding: '80rpx 0', textAlign: 'center' }}>
+              <Text style={{ fontSize: 28, color: '#86909C' }}>暂无班次，点击上方创建</Text>
+            </View>
+          )}
         </View>
       </View>
     </ScrollView>

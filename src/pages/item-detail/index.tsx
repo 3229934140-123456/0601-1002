@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView } from '@tarojs/components';
-import Taro, { useRouter } from '@tarojs/taro';
+import { View, Text, Image, ScrollView, Textarea } from '@tarojs/components';
+import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import Tag from '../../components/Tag';
 import StatusBadge from '../../components/StatusBadge';
-import { mockHandoverItems, getPostName, getPriorityName } from '../../data/mockData';
-import { HandoverItem } from '../../types/handover';
+import useHandoverStore from '../../store/useHandoverStore';
+import { getPostName, getPriorityName } from '../../data/mockData';
 import { 
   navigateTo, 
   navigateBack, 
@@ -20,63 +20,107 @@ import {
 
 const ItemDetailPage: React.FC = () => {
   const router = useRouter();
-  const [item, setItem] = useState<HandoverItem | null>(null);
+  const { 
+    getHandoverItemById, 
+    confirmHandover, 
+    returnHandover, 
+    resendHandover,
+    completeHandover,
+    markReminderRead
+  } = useHandoverStore();
+
+  const [itemId, setItemId] = useState('');
+  const [returnReason, setReturnReason] = useState('');
+  const [showReturnInput, setShowReturnInput] = useState(false);
+
+  const item = getHandoverItemById(itemId);
 
   useEffect(() => {
     const id = router.params.id;
-    const found = mockHandoverItems.find(i => i.id === id);
-    if (found) {
-      setItem(found);
+    if (id) {
+      setItemId(id);
+      // 标记相关提醒为已读
+      // markReminderRead(id); // 简单处理，这里不追踪具体提醒id
     } else {
       showToast('事项不存在');
       setTimeout(() => navigateBack(), 1000);
     }
   }, [router.params.id]);
 
+  useDidShow(() => {
+    // 页面显示时刷新
+  });
+
   const handleConfirm = async () => {
+    if (!item) return;
+    
     const confirm = await showModal({
       title: '确认交接',
       content: '确认已了解该交接事项，将开始跟进处理。',
       confirmText: '确认'
     });
-    if (confirm && item) {
-      setItem({
-        ...item,
-        status: 'confirmed',
-        confirmedAt: new Date().toISOString()
-      });
+    
+    if (confirm) {
+      confirmHandover(item.id);
       showToast('确认成功', 'success');
     }
   };
 
-  const handleReturn = async () => {
+  const handleReturnToggle = () => {
+    setShowReturnInput(!showReturnInput);
+    setReturnReason('');
+  };
+
+  const handleReturnSubmit = async () => {
+    if (!item) return;
+    if (!returnReason.trim()) {
+      showToast('请填写退回原因');
+      return;
+    }
+
     const confirm = await showModal({
-      title: '退回交接',
-      content: '退回后需要创建人补充信息后重新提交，请填写退回原因。',
-      confirmText: '确认退回'
+      title: '确认退回',
+      content: '退回后需要创建人补充信息后重新提交，确认退回吗？',
+      confirmText: '退回'
     });
+
     if (confirm) {
-      showToast('已退回，请补充说明');
+      returnHandover(item.id, returnReason.trim());
+      setShowReturnInput(false);
+      setReturnReason('');
+      showToast('已退回', 'success');
     }
   };
 
-  const handleViewMembers = () => {
-    navigateTo('/pages/member-confirm/index');
+  const handleResend = () => {
+    if (!item) return;
+    resendHandover(item.id);
+    showToast('已重新提交', 'success');
   };
 
   const handleComplete = async () => {
+    if (!item) return;
+    
     const confirm = await showModal({
       title: '完成交接',
       content: '确认该事项已全部处理完成？',
       confirmText: '已完成'
     });
-    if (confirm && item) {
-      setItem({
-        ...item,
-        status: 'completed'
-      });
+
+    if (confirm) {
+      completeHandover(item.id);
       showToast('已标记完成', 'success');
     }
+  };
+
+  const handleViewMembers = () => {
+    if (item) {
+      navigateTo(`/pages/member-confirm/index?shiftId=${item.shiftId}`);
+    }
+  };
+
+  const handleEdit = () => {
+    showToast('编辑功能开发中');
   };
 
   if (!item) {
@@ -113,6 +157,33 @@ const ItemDetailPage: React.FC = () => {
           <View className={styles.returnedBox}>
             <Text className={styles.returnedTitle}>📋 退回原因</Text>
             <Text className={styles.returnedReason}>{item.returnedReason}</Text>
+            {item.returnedAt && (
+              <Text className={styles.returnedTime}>
+                退回时间：{formatFullDate(item.returnedAt)}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {showReturnInput && item.status === 'pending' && (
+          <View className={styles.returnInputBox}>
+            <Text className={styles.returnInputTitle}>填写退回原因</Text>
+            <Textarea
+              className={styles.returnTextarea}
+              placeholder="请详细说明退回原因，方便创建人补充信息"
+              value={returnReason}
+              onInput={(e) => setReturnReason(e.detail.value)}
+              maxlength={200}
+              autoHeight
+            />
+            <View className={styles.returnActions}>
+              <View className={styles.returnCancel} onClick={handleReturnToggle}>
+                <Text>取消</Text>
+              </View>
+              <View className={styles.returnSubmit} onClick={handleReturnSubmit}>
+                <Text>确认退回</Text>
+              </View>
+            </View>
           </View>
         )}
 
@@ -140,7 +211,7 @@ const ItemDetailPage: React.FC = () => {
           <View className={styles.baseCard}>
             <Text className={styles.sectionTitle}>
               📎 附件记录 
-              <Text style={{ fontSize: 24, color: '#86909C', fontWeight: 400 }}>
+              <Text style={{ fontSize: 22, color: '#86909C', fontWeight: 400, marginLeft: 8 }}>
                 ({item.attachments.length}个)
               </Text>
             </Text>
@@ -152,16 +223,27 @@ const ItemDetailPage: React.FC = () => {
                       className={styles.attachImage} 
                       src={att.url} 
                       mode="aspectFill"
-                      onClick={() => showToast('查看大图功能开发中')}
+                      onClick={() => {
+                        Taro.previewImage({
+                          urls: item.attachments.filter(a => a.type === 'image').map(a => a.url),
+                          current: att.url
+                        });
+                      }}
                     />
                   ) : (
-                    <View className={styles.attachVoice}>
+                    <View 
+                      className={styles.attachVoice}
+                      onClick={() => showToast('语音播放功能开发中')}
+                    >
                       <Text className={styles.voiceIcon}>🎵</Text>
                       <Text className={styles.voiceName}>{att.name}</Text>
                       <Text className={styles.voiceDuration}>
                         {att.duration ? formatDuration(att.duration) : ''}
                       </Text>
                     </View>
+                  )}
+                  {att.size && (
+                    <Text className={styles.attachSize}>{formatFileSize(att.size)}</Text>
                   )}
                 </View>
               ))}
@@ -235,8 +317,8 @@ const ItemDetailPage: React.FC = () => {
       <View className={styles.bottomBar}>
         {item.status === 'pending' && (
           <>
-            <View className={`${styles.btn} ${styles.danger}`} onClick={handleReturn}>
-              <Text>退回补充</Text>
+            <View className={`${styles.btn} ${styles.danger}`} onClick={handleReturnToggle}>
+              <Text>{showReturnInput ? '取消退回' : '退回补充'}</Text>
             </View>
             <View className={`${styles.btn} ${styles.primary}`} onClick={handleConfirm}>
               <Text>确认交接</Text>
@@ -255,10 +337,10 @@ const ItemDetailPage: React.FC = () => {
         )}
         {item.status === 'returned' && (
           <>
-            <View className={`${styles.btn} ${styles.outline}`} onClick={handleViewMembers}>
-              <Text>查看详情</Text>
+            <View className={`${styles.btn} ${styles.outline}`} onClick={handleEdit}>
+              <Text>编辑详情</Text>
             </View>
-            <View className={`${styles.btn} ${styles.primary}`} onClick={() => showToast('编辑补充功能开发中')}>
+            <View className={`${styles.btn} ${styles.primary}`} onClick={handleResend}>
               <Text>补充重发</Text>
             </View>
           </>
@@ -268,8 +350,8 @@ const ItemDetailPage: React.FC = () => {
             <View className={`${styles.btn} ${styles.outline}`} onClick={handleViewMembers}>
               <Text>成员确认</Text>
             </View>
-            <View className={`${styles.btn} ${styles.primary}`} onClick={() => showToast('已完成')}>
-              <Text>已完成</Text>
+            <View className={`${styles.btn} ${styles.primary}`} onClick={() => navigateBack()}>
+              <Text>返回</Text>
             </View>
           </>
         )}

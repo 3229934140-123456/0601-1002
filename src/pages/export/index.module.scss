@@ -1,0 +1,285 @@
+.page {
+  min-height: 100vh;
+  background-color: #F5F7FA;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  height: 88rpx;
+  background-color: #ffffff;
+  border-bottom: 1rpx solid #E5E6EB;
+}
+
+.backBtn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backIcon {
+  font-size: 36rpx;
+  color: #1D2129;
+}
+
+.headerTitle {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.placeholder {
+  width: 60rpx;
+}
+
+.content {
+  flex: 1;
+  padding: 24rpx 32rpx 140rpx;
+}
+
+.section {
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.sectionTitle {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+  margin-bottom: 24rpx;
+  display: block;
+}
+
+.filterRow {
+  margin-bottom: 24rpx;
+}
+
+.filterRow:last-child {
+  margin-bottom: 0;
+}
+
+.filterLabel {
+  font-size: 28rpx;
+  color: #4E5969;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.chip {
+  padding: 12rpx 28rpx;
+  background-color: #F2F3F5;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #4E5969;
+}
+
+.chip.active {
+  background-color: #E8F0FF;
+  color: #2B6AFF;
+}
+
+.picker {
+  height: 72rpx;
+  background-color: #F2F3F5;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+  display: flex;
+  align-items: center;
+}
+
+.dateRow {
+  display: flex;
+  gap: 24rpx;
+}
+
+.dateItem {
+  flex: 1;
+}
+
+.datePicker {
+  height: 72rpx;
+  background-color: #F2F3F5;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+  display: flex;
+  align-items: center;
+}
+
+.previewSection {
+  margin-bottom: 32rpx;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.previewTitle {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.previewCount {
+  font-size: 26rpx;
+  color: #86909C;
+}
+
+.previewCard {
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.previewDocTitle {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1D2129;
+  text-align: center;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.previewDate {
+  font-size: 24rpx;
+  color: #86909C;
+  text-align: center;
+  margin-bottom: 32rpx;
+  display: block;
+}
+
+.previewStats {
+  display: flex;
+  justify-content: space-around;
+  padding: 24rpx 0;
+  border-bottom: 1rpx dashed #E5E6EB;
+  margin-bottom: 24rpx;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNum {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #2B6AFF;
+  display: block;
+}
+
+.statLabel {
+  font-size: 24rpx;
+  color: #86909C;
+  margin-top: 8rpx;
+  display: block;
+}
+
+.previewList {
+  max-height: 600rpx;
+}
+
+.previewItem {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #F2F3F5;
+}
+
+.previewItem:last-child {
+  border-bottom: none;
+}
+
+.previewIdx {
+  font-size: 26rpx;
+  color: #86909C;
+  width: 40rpx;
+  flex-shrink: 0;
+}
+
+.previewItemContent {
+  flex: 1;
+}
+
+.previewItemTitle {
+  font-size: 28rpx;
+  color: #1D2129;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.previewItemMeta {
+  display: flex;
+  justify-content: space-between;
+}
+
+.previewMetaText {
+  font-size: 24rpx;
+  color: #86909C;
+}
+
+.previewMetaDate {
+  font-size: 24rpx;
+  color: #C9CDD4;
+}
+
+.previewMore {
+  font-size: 24rpx;
+  color: #86909C;
+  text-align: center;
+  padding: 16rpx 0;
+  display: block;
+}
+
+.previewEmpty {
+  font-size: 28rpx;
+  color: #C9CDD4;
+  text-align: center;
+  padding: 64rpx 0;
+  display: block;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background-color: #ffffff;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+
+.exportBtn {
+  width: 100%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #2B6AFF 0%, #5B8DEF 100%);
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+}

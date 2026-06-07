@@ -59,6 +59,47 @@
   box-shadow: $shadow-card;
 }
 
+.summarySection {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.summarySectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.summarySectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.editSummaryBtn {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  padding: 8rpx 20rpx;
+  background-color: $color-primary-bg;
+  border-radius: $radius-round;
+}
+
+.summaryContent {
+  background-color: $color-bg-gray;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.summaryText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.8;
+}
+
 .listHeader {
   padding: $spacing-md $spacing-lg;
   border-bottom: 1rpx solid $color-divider;
@@ -67,15 +108,18 @@
   align-items: center;
 }
 
-.listTitle {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+.listActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
 }
 
-.listCount {
+.remindBtn {
   font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  color: $color-primary;
+  padding: 8rpx 20rpx;
+  background-color: $color-primary-bg;
+  border-radius: $radius-round;
 }
 
 .memberItem {

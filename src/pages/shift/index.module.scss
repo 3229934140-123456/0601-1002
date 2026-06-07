@@ -145,7 +145,7 @@
 
 .quickActions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: $spacing-md;
   background-color: $color-bg-card;
   border-radius: $radius-lg;
@@ -180,6 +180,9 @@
   }
   &.gray {
     background-color: $color-bg-gray;
+  }
+  &.purple {
+    background-color: #F3E8FF;
   }
 }
 

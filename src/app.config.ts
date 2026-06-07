@@ -7,7 +7,11 @@ export default defineAppConfig({
     'pages/mine/index',
     'pages/item-detail/index',
     'pages/member-confirm/index',
-    'pages/create-handover/index'
+    'pages/create-handover/index',
+    'pages/create-shift/index',
+    'pages/history/index',
+    'pages/export/index',
+    'pages/shift-summary/index'
   ],
   window: {
     backgroundTextStyle: 'light',

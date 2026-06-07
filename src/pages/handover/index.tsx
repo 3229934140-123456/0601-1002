@@ -1,15 +1,17 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Input, ScrollView } from '@tarojs/components';
-import Taro, { usePullDownRefresh } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import HandoverItemCard from '../../components/HandoverItem';
 import EmptyState from '../../components/EmptyState';
-import { mockHandoverItems, getPostName } from '../../data/mockData';
-import { HandoverItem, PostType, HandoverStatus } from '../../types/handover';
+import useHandoverStore from '../../store/useHandoverStore';
+import { PostType, HandoverStatus } from '../../types/handover';
+import { getPostName } from '../../data/mockData';
 import { navigateTo, showToast } from '../../utils';
 
 const HandoverPage: React.FC = () => {
-  const [items, setItems] = useState<HandoverItem[]>(mockHandoverItems);
+  const { handoverItems } = useHandoverStore();
+
   const [searchText, setSearchText] = useState('');
   const [activePost, setActivePost] = useState<PostType | 'all'>('all');
   const [activeStatus, setActiveStatus] = useState<HandoverStatus | 'all'>('all');
@@ -21,18 +23,23 @@ const HandoverPage: React.FC = () => {
     }, 1000);
   });
 
+  useDidShow(() => {
+    // 页面显示时刷新数据
+  });
+
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
+    return handoverItems.filter(item => {
       const matchPost = activePost === 'all' || item.post === activePost;
       const matchStatus = activeStatus === 'all' || item.status === activeStatus;
       const matchSearch = !searchText || 
         item.title.includes(searchText) || 
         item.description.includes(searchText) ||
         (item.customerName && item.customerName.includes(searchText)) ||
-        (item.orderNo && item.orderNo.includes(searchText));
+        (item.orderNo && item.orderNo.includes(searchText)) ||
+        item.tags.some(tag => tag.includes(searchText));
       return matchPost && matchStatus && matchSearch;
     });
-  }, [items, activePost, activeStatus, searchText]);
+  }, [handoverItems, activePost, activeStatus, searchText]);
 
   const statusList: { key: HandoverStatus | 'all'; label: string }[] = [
     { key: 'all', label: '全部' },
@@ -50,8 +57,8 @@ const HandoverPage: React.FC = () => {
   ];
 
   const getStatusCount = (status: HandoverStatus | 'all'): number => {
-    if (status === 'all') return items.length;
-    return items.filter(i => i.status === status).length;
+    if (status === 'all') return handoverItems.length;
+    return handoverItems.filter(i => i.status === status).length;
   };
 
   const handleCreate = () => {
@@ -65,7 +72,7 @@ const HandoverPage: React.FC = () => {
           <Text className={styles.searchIcon}>🔍</Text>
           <Input
             className={styles.searchInput}
-            placeholder="搜索标题、订单号、客户名"
+            placeholder="搜索标题、订单号、客户名、标签"
             value={searchText}
             onInput={(e) => setSearchText(e.detail.value)}
             confirmType="search"

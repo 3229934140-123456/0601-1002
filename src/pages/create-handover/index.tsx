@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, Input, Textarea, Image, ScrollView } from '@tarojs/components';
+import React, { useState, useMemo } from 'react';
+import { View, Text, Input, Textarea, Image, ScrollView, Picker } from '@tarojs/components';
+import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
-import { mockMembers, mockTemplates, getPriorityName, getPostName } from '../../data/mockData';
-import { PostType, PriorityLevel, TeamMember } from '../../types/handover';
+import Tag from '../../components/Tag';
+import useHandoverStore from '../../store/useHandoverStore';
+import { PostType, PriorityLevel, TeamMember, Attachment } from '../../types/handover';
+import { getPriorityName, getPostName } from '../../data/mockData';
 import { showToast, showModal, navigateBack } from '../../utils';
 
 const CreateHandoverPage: React.FC = () => {
+  const { members, templates, shifts, addHandoverItem } = useHandoverStore();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('normal');
@@ -15,45 +20,114 @@ const CreateHandoverPage: React.FC = () => {
   const [orderNo, setOrderNo] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [shiftId, setShiftId] = useState<string>('');
+  const [deadline, setDeadline] = useState('');
 
-  const priorityList: PriorityLevel[] = ['urgent', 'high', 'normal', 'low'];
-  const postList: PostType[] = ['service', 'warehouse', 'store'];
-  const availableMembers = mockMembers.filter(m => m.post === post);
+  const availableMembers = useMemo(() => {
+    return members.filter(m => m.post === post);
+  }, [members, post]);
+
+  const postTemplates = useMemo(() => {
+    return templates.filter(t => t.post === post);
+  }, [templates, post]);
+
+  const postShifts = useMemo(() => {
+    return shifts.filter(s => s.post === post);
+  }, [shifts, post]);
 
   const handlePostChange = (newPost: PostType) => {
     setPost(newPost);
     setAssignee(null);
     setSelectedTemplate('');
+    setShiftId('');
   };
 
-  const handleTemplateSelect = () => {
-    const templates = mockTemplates.filter(t => t.post === post);
-    if (templates.length === 0) {
-      showToast('当前岗位暂无模板');
-      return;
+  const handleTemplateSelect = (e) => {
+    const idx = parseInt(e.detail.value);
+    if (idx < 0 || idx >= postTemplates.length) return;
+    
+    const template = postTemplates[idx];
+    setSelectedTemplate(template.id);
+    
+    if (template.items.length > 0) {
+      const firstItem = template.items[0];
+      setTitle(firstItem.title);
+      setDescription(firstItem.description);
+      setPriority(firstItem.priority);
     }
-    const templateNames = templates.map(t => t.name);
-    showToast('选择模板功能开发中');
+    
+    showToast('模板已应用', 'success');
   };
 
-  const handleAssigneeSelect = (member: TeamMember) => {
-    setAssignee(member);
+  const handleAddImage = async () => {
+    try {
+      const res = await Taro.chooseImage({
+        count: 9 - attachments.filter(a => a.type === 'image').length,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera']
+      });
+      
+      const newAttachments: Attachment[] = res.tempFiles.map((file, index) => ({
+        id: `img_${Date.now()}_${index}`,
+        type: 'image' as const,
+        url: file.path,
+        name: `图片${attachments.length + index + 1}.jpg`,
+        size: file.size
+      }));
+      
+      setAttachments(prev => [...prev, ...newAttachments]);
+      showToast(`已添加${newAttachments.length}张图片`, 'success');
+    } catch (err) {
+      console.error('[CreateHandover] 选择图片失败', err);
+    }
   };
 
-  const handleAddTag = () => {
-    showToast('添加标签功能开发中');
+  const handleAddVoice = () => {
+    showToast('语音录制功能演示中');
+    const mockVoice: Attachment = {
+      id: `voice_${Date.now()}`,
+      type: 'voice',
+      url: '',
+      name: `语音记录${attachments.filter(a => a.type === 'voice').length + 1}.mp3`,
+      duration: 30 + Math.floor(Math.random() * 60),
+      size: Math.floor(Math.random() * 500 + 100) * 1024
+    };
+    setAttachments(prev => [...prev, mockVoice]);
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleAddTag = async () => {
+    try {
+      const res = await Taro.showModal({
+        title: '添加标签',
+        editable: true,
+        placeholderText: '请输入标签名称',
+        confirmText: '添加'
+      });
+      
+      if (res.confirm && res.content && res.content.trim()) {
+        const newTag = res.content.trim();
+        if (tags.includes(newTag)) {
+          showToast('标签已存在');
+          return;
+        }
+        if (tags.length >= 10) {
+          showToast('最多添加10个标签');
+          return;
+        }
+        setTags(prev => [...prev, newTag]);
+      }
+    } catch (err) {
+      console.error('[CreateHandover] 添加标签失败', err);
+    }
   };
 
   const handleRemoveTag = (tag: string) => {
     setTags(tags.filter(t => t !== tag));
-  };
-
-  const handleUploadImage = () => {
-    showToast('上传图片功能开发中');
-  };
-
-  const handleUploadVoice = () => {
-    showToast('录制语音功能开发中');
   };
 
   const handleSubmit = async () => {
@@ -77,6 +151,24 @@ const CreateHandoverPage: React.FC = () => {
     });
 
     if (confirm) {
+      const currentShift = shifts.find(s => s.post === post && s.status === 'ongoing') 
+        || postShifts[0];
+
+      addHandoverItem({
+        title: title.trim(),
+        description: description.trim(),
+        priority,
+        post,
+        creator: members[0],
+        assignee,
+        customerName: customerName.trim() || undefined,
+        orderNo: orderNo.trim() || undefined,
+        attachments,
+        tags,
+        shiftId: currentShift?.id || '',
+        deadline: deadline || undefined
+      });
+
       showToast('提交成功', 'success');
       setTimeout(() => {
         navigateBack();
@@ -85,8 +177,11 @@ const CreateHandoverPage: React.FC = () => {
   };
 
   const handleSaveDraft = () => {
-    showToast('已保存草稿', 'success');
+    showToast('草稿已保存', 'success');
   };
+
+  const priorityList: PriorityLevel[] = ['urgent', 'high', 'normal', 'low'];
+  const postList: PostType[] = ['service', 'warehouse', 'store'];
 
   return (
     <ScrollView scrollY className={styles.page}>
@@ -163,12 +258,24 @@ const CreateHandoverPage: React.FC = () => {
         <View className={styles.formCard}>
           <View className={styles.formItem}>
             <Text className={styles.formLabel}>使用模板</Text>
-            <View className={styles.templateSelect} onClick={handleTemplateSelect}>
-              <Text style={{ color: selectedTemplate ? '#1D2129' : '#86909C' }}>
-                {selectedTemplate || '选择模板快速填充'}
-              </Text>
-              <Text style={{ color: '#86909C' }}>›</Text>
-            </View>
+            {postTemplates.length > 0 ? (
+              <Picker
+                range={postTemplates.map(t => t.name)}
+                value={postTemplates.findIndex(t => t.id === selectedTemplate)}
+                onChange={handleTemplateSelect}
+              >
+                <View className={styles.templateSelect}>
+                  <Text style={{ color: selectedTemplate ? '#1D2129' : '#86909C' }}>
+                    {postTemplates.find(t => t.id === selectedTemplate)?.name || '选择模板快速填充'}
+                  </Text>
+                  <Text style={{ color: '#86909C' }}>›</Text>
+                </View>
+              </Picker>
+            ) : (
+              <View className={styles.templateSelect}>
+                <Text style={{ color: '#86909C' }}>当前岗位暂无模板</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -183,13 +290,40 @@ const CreateHandoverPage: React.FC = () => {
                 <View
                   key={member.id}
                   className={`${styles.assigneeItem} ${assignee?.id === member.id ? styles.active : ''}`}
-                  onClick={() => handleAssigneeSelect(member)}
+                  onClick={() => setAssignee(member)}
                 >
                   <Image className={styles.avatar} src={member.avatar} mode="aspectFill" />
                   <Text className={styles.name}>{member.name}</Text>
                 </View>
               ))}
             </View>
+          </View>
+
+          <View className={styles.formItem}>
+            <Text className={styles.formLabel}>所属班次</Text>
+            {postShifts.length > 0 ? (
+              <Picker
+                range={postShifts.map(s => s.name)}
+                value={postShifts.findIndex(s => s.id === shiftId)}
+                onChange={(e) => {
+                  const idx = parseInt(e.detail.value);
+                  if (postShifts[idx]) {
+                    setShiftId(postShifts[idx].id);
+                  }
+                }}
+              >
+                <View className={styles.templateSelect}>
+                  <Text style={{ color: shiftId ? '#1D2129' : '#86909C' }}>
+                    {postShifts.find(s => s.id === shiftId)?.name || '选择班次（选填）'}
+                  </Text>
+                  <Text style={{ color: '#86909C' }}>›</Text>
+                </View>
+              </Picker>
+            ) : (
+              <View className={styles.templateSelect}>
+                <Text style={{ color: '#86909C' }}>暂无班次</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -210,20 +344,66 @@ const CreateHandoverPage: React.FC = () => {
               onInput={(e) => setOrderNo(e.detail.value)}
             />
           </View>
+
+          <View className={styles.formItem}>
+            <Text className={styles.formLabel}>截止时间（选填）</Text>
+            <Picker
+              mode="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.detail.value)}
+            >
+              <View className={styles.templateSelect}>
+                <Text style={{ color: deadline ? '#1D2129' : '#86909C' }}>
+                  {deadline || '设置截止时间'}
+                </Text>
+                <Text style={{ color: '#86909C' }}>›</Text>
+              </View>
+            </Picker>
+          </View>
         </View>
 
         <View className={styles.formCard}>
           <View className={styles.formItem}>
-            <Text className={styles.formLabel}>附件上传</Text>
+            <Text className={styles.formLabel}>
+              附件上传
+              <Text style={{ fontSize: 22, color: '#86909C', fontWeight: 400, marginLeft: 8 }}>
+                （{attachments.length}/9）
+              </Text>
+            </Text>
             <View className={styles.uploadSection}>
-              <View className={styles.uploadItem} onClick={handleUploadImage}>
-                <Text className={styles.icon}>🖼️</Text>
-                <Text className={styles.text}>添加图片</Text>
-              </View>
-              <View className={styles.uploadItem} onClick={handleUploadVoice}>
-                <Text className={styles.icon}>🎤</Text>
-                <Text className={styles.text}>录制语音</Text>
-              </View>
+              {attachments.map(att => (
+                <View key={att.id} className={styles.uploadItem}>
+                  {att.type === 'image' ? (
+                    <Image 
+                      className={styles.uploadImage} 
+                      src={att.url} 
+                      mode="aspectFill" 
+                    />
+                  ) : (
+                    <View className={styles.uploadVoice}>
+                      <Text className={styles.voiceIcon}>🎵</Text>
+                    </View>
+                  )}
+                  <View 
+                    className={styles.deleteBtn}
+                    onClick={() => handleRemoveAttachment(att.id)}
+                  >
+                    <Text>×</Text>
+                  </View>
+                </View>
+              ))}
+              {attachments.length < 9 && (
+                <>
+                  <View className={styles.uploadAddBtn} onClick={handleAddImage}>
+                    <Text className={styles.uploadIcon}>🖼️</Text>
+                    <Text className={styles.uploadText}>添加图片</Text>
+                  </View>
+                  <View className={styles.uploadAddBtn} onClick={handleAddVoice}>
+                    <Text className={styles.uploadIcon}>🎤</Text>
+                    <Text className={styles.uploadText}>录制语音</Text>
+                  </View>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -238,9 +418,11 @@ const CreateHandoverPage: React.FC = () => {
                   <Text className={styles.close} onClick={() => handleRemoveTag(tag)}>×</Text>
                 </View>
               ))}
-              <View className={styles.tagAdd} onClick={handleAddTag}>
-                <Text>+ 添加标签</Text>
-              </View>
+              {tags.length < 10 && (
+                <View className={styles.tagAdd} onClick={handleAddTag}>
+                  <Text>+ 添加标签</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

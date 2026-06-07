@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
-import Taro, { usePullDownRefresh } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import EmptyState from '../../components/EmptyState';
-import { mockReminders } from '../../data/mockData';
+import useHandoverStore from '../../store/useHandoverStore';
 import { ReminderItem } from '../../types/handover';
 import { navigateTo, showToast, formatFullDate, getRelativeTime } from '../../utils';
 
 type ReminderType = 'all' | 'timeout' | 'pending' | 'returned' | 'system';
 
 const ReminderPage: React.FC = () => {
-  const [reminders, setReminders] = useState<ReminderItem[]>(mockReminders);
+  const { reminders, markReminderRead, markAllRemindersRead, confirmHandover } = useHandoverStore();
   const [activeType, setActiveType] = useState<ReminderType>('all');
 
   usePullDownRefresh(() => {
@@ -18,6 +18,10 @@ const ReminderPage: React.FC = () => {
       Taro.stopPullDownRefresh();
       showToast('刷新成功', 'success');
     }, 1000);
+  });
+
+  useDidShow(() => {
+    // 页面显示时刷新
   });
 
   const typeList: { key: ReminderType; label: string; icon: string }[] = [
@@ -51,32 +55,28 @@ const ReminderPage: React.FC = () => {
   };
 
   const handleMarkAllRead = () => {
-    setReminders(prev => prev.map(r => ({ ...r, read: true })));
+    markAllRemindersRead();
     showToast('已全部标记为已读', 'success');
   };
 
   const handleViewDetail = (reminder: ReminderItem) => {
-    // 标记为已读
-    setReminders(prev => prev.map(r => 
-      r.id === reminder.id ? { ...r, read: true } : r
-    ));
+    markReminderRead(reminder.id);
     
     if (reminder.itemId) {
       navigateTo(`/pages/item-detail/index?id=${reminder.itemId}`);
     }
   };
 
-  const handleQuickAction = (reminder: ReminderItem, e: React.MouseEvent) => {
+  const handleQuickAction = (reminder: ReminderItem, e: any) => {
     e.stopPropagation();
     
-    setReminders(prev => prev.map(r => 
-      r.id === reminder.id ? { ...r, read: true } : r
-    ));
+    markReminderRead(reminder.id);
     
-    if (reminder.type === 'pending') {
+    if (reminder.type === 'pending' && reminder.itemId) {
+      confirmHandover(reminder.itemId);
       showToast('已确认', 'success');
-    } else if (reminder.type === 'returned') {
-      showToast('去补充');
+    } else if (reminder.type === 'returned' && reminder.itemId) {
+      navigateTo(`/pages/item-detail/index?id=${reminder.itemId}`);
     } else if (reminder.itemId) {
       navigateTo(`/pages/item-detail/index?id=${reminder.itemId}`);
     }

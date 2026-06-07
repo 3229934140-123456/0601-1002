@@ -1,19 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
+import { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
-import { mockStats } from '../../data/mockData';
-import { StatsData, PostType } from '../../types/handover';
+import useHandoverStore from '../../store/useHandoverStore';
+import { PostType } from '../../types/handover';
 import { getPostName } from '../../data/mockData';
 
 const StatsPage: React.FC = () => {
-  const [stats, setStats] = useState<StatsData>(mockStats);
+  const { getStats } = useHandoverStore();
+  const stats = useMemo(() => getStats(), [getStats]);
+
+  useDidShow(() => {
+    // 页面显示时刷新统计
+  });
 
   const getPostIcon = (post: PostType): string => {
     const iconMap = { service: '🎧', warehouse: '📦', store: '🏪' };
     return iconMap[post];
   };
 
-  const maxTrendValue = Math.max(...stats.dailyTrend.map(d => d.count));
+  const maxTrendValue = Math.max(...stats.dailyTrend.map(d => d.count), 1);
 
   return (
     <ScrollView scrollY className={styles.page}>
@@ -27,7 +33,7 @@ const StatsPage: React.FC = () => {
               {stats.totalHandovers}
               <Text className={styles.unit}>条</Text>
             </Text>
-            <Text className={styles.statSub}>较上月增长 12.5%</Text>
+            <Text className={styles.statSub}>实时统计</Text>
           </View>
 
           <View className={styles.statCard}>
@@ -36,7 +42,7 @@ const StatsPage: React.FC = () => {
               {stats.completedRate}
               <Text className={styles.unit}>%</Text>
             </Text>
-            <Text className={styles.statSub}>目标 85%</Text>
+            <Text className={styles.statSub}>已确认+已完成</Text>
           </View>
 
           <View className={styles.statCard}>
@@ -45,7 +51,7 @@ const StatsPage: React.FC = () => {
               {stats.onTimeRate}
               <Text className={styles.unit}>%</Text>
             </Text>
-            <Text className={styles.statSub}>超时率 7.5%</Text>
+            <Text className={styles.statSub}>未超时占比</Text>
           </View>
 
           <View className={styles.statCard}>
@@ -54,7 +60,7 @@ const StatsPage: React.FC = () => {
               {stats.avgHandleTime}
               <Text className={styles.unit}>分钟</Text>
             </Text>
-            <Text className={styles.statSub}>环比缩短 5 分钟</Text>
+            <Text className={styles.statSub}>历史均值</Text>
           </View>
         </View>
 
@@ -80,15 +86,21 @@ const StatsPage: React.FC = () => {
         <Text className={styles.sectionTitle}>高频问题标签</Text>
         <View className={styles.tagsSection}>
           <View className={styles.tagCloud}>
-            {stats.topTags.map((tag, index) => (
-              <View
-                key={tag.tag}
-                className={`${styles.tagItem} ${index < 3 ? styles.hot : ''}`}
-              >
-                <Text>{tag.tag}</Text>
-                <Text className={styles.tagCount}>{tag.count}</Text>
+            {stats.topTags.length > 0 ? (
+              stats.topTags.map((tag, index) => (
+                <View
+                  key={tag.tag}
+                  className={`${styles.tagItem} ${index < 3 ? styles.hot : ''}`}
+                >
+                  <Text>{tag.tag}</Text>
+                  <Text className={styles.tagCount}>{tag.count}</Text>
+                </View>
+              ))
+            ) : (
+              <View className={styles.emptyTags}>
+                <Text className={styles.emptyText}>暂无标签数据</Text>
               </View>
-            ))}
+            )}
           </View>
         </View>
 

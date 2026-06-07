@@ -197,6 +197,17 @@
   }
 }
 
+.emptyTags {
+  width: 100%;
+  padding: 60rpx 0;
+  text-align: center;
+}
+
+.emptyText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
 .trendSection {
   background-color: $color-bg-card;
   border-radius: $radius-lg;
